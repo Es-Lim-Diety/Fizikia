@@ -11,3 +11,8 @@ class particle:
         self.position = position
         self.velocity = velocity
         self.acceleration = acceleration
+        self.radius=1
+
+    """this is the instance method"""
+    def update_position(self, fps):
+        self.position.x += (self.velocity.x * 1)/fps
