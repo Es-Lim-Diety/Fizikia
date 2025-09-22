@@ -6,13 +6,13 @@ class vector:
 
 class particle:
     """class for objects in simulation"""
-    def __init__(self, mass,position, velocity,acceleration):
+    def __init__(self, mass,position, velocity,acceleration,color):
         self.mass = mass
         self.position = position
         self.velocity = velocity
         self.acceleration = acceleration
-        self.radius=1
-
+        self.radius=10
+        self.color=color
     """this is the instance method"""
-    def update_position(self, fps):
-        self.position.x += (self.velocity.x * 1)/fps
+    def update_position(self):
+        self.position.x += (self.velocity.x * 1)
