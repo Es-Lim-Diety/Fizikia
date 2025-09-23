@@ -1,5 +1,13 @@
 import numpy as np
 
+class Node:
+    def __init__(self,position):
+        self.position = position
+        self.width=100
+        self.height=100
+        self.container=[]
+
+
 class particle:
     """class for objects in simulation"""
     def __init__(self, mass, position, velocity, acceleration, color):
@@ -15,8 +23,17 @@ class particle:
         self.velocity += self.acceleration
 
     """integrate velocity to calculate position"""
-    def update_position(self):
+    def update_position(self,width,height):
+        self.update_velocity()
         self.position += self.velocity
+        if self.position[0]>width:
+            self.position[0] = width-self.radius
+        if self.position[1]>height:
+            self.position[1] = height-self.radius
+        if self.position[0] <0:
+            self.position[0] = 0 + self.radius
+        if self.position[1] <0:
+            self.position[1] = 0 + self.radius
 
     def wall_collision(self, middle):
         # check collision with vertical wall
