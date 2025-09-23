@@ -16,8 +16,8 @@ pygame.display.set_caption("Physics Visualization")
 clock = pygame.time.Clock()
 FPS = 60
 
-a = particle(30, [300.0, 100.0],[5.0, 0.0], [0.0, 0.0],(0, 255, 0))
-b = particle(40, [500.0, 80.0], [-5.0, 0.0], [0.0, 0.0], (255, 0, 0))
+a = particle(30, [300.0, 100.0],[5.0, 0.0], [0.0,2],(0, 255, 0))
+b = particle(40, [500.0, 80.0], [-5.0, 0.0], [0.0, 3], (255, 0, 0))
 particles=[a, b]
 
   
@@ -33,7 +33,7 @@ while running:
         particle.wall_collision([WIDTH/2, HEIGHT/2])
 
     for particle in particles:
-        particle.update_position()
+        particle.update_position(WIDTH, HEIGHT)
 
     # -- Rendering --
     screen.fill((0, 0, 0))  # clear screen with black
