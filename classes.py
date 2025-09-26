@@ -20,19 +20,19 @@ class particle:
     
     """integrate acceleration to calculate velocity"""
     def update_velocity(self):
-        self.velocity += self.acceleration
+        self.velocity += self.acceleration * dt
 
     """integrate velocity to calculate position"""
     def update_position(self,width,height):
         self.update_velocity()
         self.position += self.velocity
-        if self.position[0]>width:
-            self.position[0] = width-self.radius
-        if self.position[1]>height:
-            self.position[1] = height-self.radius
+        if self.position[0] > width:
+            self.position[0] = width - self.radius
+        if self.position[1] > height:
+            self.position[1] = height - self.radius
         if self.position[0] <0:
             self.position[0] = 0 + self.radius
-        if self.position[1] <0:
+        if self.position[1] < 0:
             self.position[1] = 0 + self.radius
 
     def wall_collision(self, middle):

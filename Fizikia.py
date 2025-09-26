@@ -1,5 +1,9 @@
 from classes import *
 
+# import macros
+""" Screen dimensions """
+WIDTH, HEIGHT = 800, 600
+
 def  collision(particleA, particleB):
        separation_vector = particleA.position - particleB.position
        separation = np.linalg.norm(separation_vector)
@@ -35,3 +39,16 @@ def momentum_after_collision(particleA, particleB):
     # updating final velocities into the particle attributes
      particleA.velocity = v_an2 + v_at
      particleB.velocity = v_bn2 + v_bt
+
+     # create data structure for the grid
+def grid(WIDTH, HEIGHT, side_length):
+     return [WIDTH/side_length][HEIGHT/side_length]
+
+def hash (particle, side_length):
+     coordinates = []
+
+     # x coordinate on grid
+     x = particle.position[0] % side_length
+     # y coordinates on grid
+     y = particle.position[1] % side_length
+     coordinates.append([x, y])
