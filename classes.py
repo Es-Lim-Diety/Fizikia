@@ -17,13 +17,16 @@ class particle:
         self.color = color
     
     """integrate acceleration to calculate velocity"""
-    def update_velocity(self):
-        self.velocity += self.acceleration
+    def update_velocity(self, dt=1):
+        # simple Euler integration
+        self.velocity += self.acceleration * dt
 
     """integrate velocity to calculate position"""
-    def update_position(self,width,height):
-        self.update_velocity()
-        self.position += self.velocity
+    def update_position(self,width,height,dt=1):
+        self.update_velocity(dt)
+        # simple Euler integration
+        self.position += self.velocity * dt
+        # keep the particle inside the screen
         if self.position[0] > width:
             self.position[0] = width - self.radius
         if self.position[1] > height:
