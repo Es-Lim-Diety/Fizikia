@@ -3,8 +3,6 @@ import numpy as np
 class Node:
     def __init__(self,position):
         self.position = position
-        self.width=100
-        self.height=100
         self.container=[]
 
 
@@ -20,7 +18,7 @@ class particle:
     
     """integrate acceleration to calculate velocity"""
     def update_velocity(self):
-        self.velocity += self.acceleration * dt
+        self.velocity += self.acceleration
 
     """integrate velocity to calculate position"""
     def update_position(self,width,height):

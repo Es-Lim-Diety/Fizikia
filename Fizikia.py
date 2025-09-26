@@ -44,11 +44,12 @@ def momentum_after_collision(particleA, particleB):
 def grid(WIDTH, HEIGHT, side_length):
      return [WIDTH/side_length][HEIGHT/side_length]
 
-def hash (particle, side_length):
-     coordinates = []
-
+def hash (particle, side_length, grid_rows):
      # x coordinate on grid
-     x = particle.position[0] % side_length
+     x = particle.position[0] // side_length
+     
      # y coordinates on grid
-     y = particle.position[1] % side_length
-     coordinates.append([x, y])
+     y = particle.position[1] // side_length
+     
+     return (x*grid_rows + y)
+
