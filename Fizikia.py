@@ -1,3 +1,5 @@
+import math
+from collections import deque
 from classes import *
 
 # import macros
@@ -40,16 +42,83 @@ def momentum_after_collision(particleA, particleB):
      particleA.velocity = v_an2 + v_at
      particleB.velocity = v_bn2 + v_bt
 
-     # create data structure for the grid
+"""support functions for rendering"""
+# create data structure for the grid
 def grid(WIDTH, HEIGHT, side_length):
-     return [WIDTH/side_length][HEIGHT/side_length]
+     grid_width = math.ceil(WIDTH / side_length)
+     grid_height = math.ceil(HEIGHT / side_length)
+     num_grids = grid_width * grid_height
 
-def hash (particle, side_length, grid_rows):
+     gridlist = []
+     for i in range(num_grids):
+          row = i // grid_width
+          col = i % grid_width
+          # only include grids fully inside the screen
+          if col * side_length < WIDTH and row * side_length < HEIGHT:
+               gridlist.append(Node(i))
+
+     return gridlist, grid_width, grid_height
+
+def hash (particle, side_length, grid_height):
      # x coordinate on grid
      x = particle.position[0] // side_length
      
      # y coordinates on grid
      y = particle.position[1] // side_length
      
-     return (x*grid_rows + y)
+     return (y*grid_height + x)
 
+def gridbfs(gridlist, gridwidth):
+    queue = deque([(node, i) for i, node in enumerate(gridlist) if node.container])
+
+    rownum=gridwidth
+    collided=set()
+    gridset=set()
+
+    while queue:
+
+        grid,i = queue.popleft()
+        gridset.add(grid)
+
+        if grid.container:
+            if i + 1 < len(gridlist) and (i + 1) % rownum != 0 and gridlist[i + 1].container:
+                if gridlist[i + 1] not in gridset:
+                    if collision(gridlist[i + 1].container, grid.container):
+                        collided.add((grid.container, gridlist[i + 1].container))
+
+            if i - 1 >= 0 and (i - 1) % rownum != 0 and gridlist[i - 1].container:
+                if gridlist[i - 1] not in gridset:
+                    if collision(gridlist[i - 1].container, grid.container):
+                        collided.add((grid.container, gridlist[i - 1].container))
+
+            if i + rownum < len(gridlist) and gridlist[i+ rownum].container:#up
+                if gridlist[i + rownum] not in gridset:
+                    if collision(gridlist[i + rownum].container, grid.container):
+                        collided.add((grid.container, gridlist[i + rownum].container))
+
+            if i + rownum - 1< len(gridlist) and (i - 1) % rownum != 0 and gridlist[i + rownum - 1].container:#NW
+                if gridlist[i + rownum - 1] not in gridset:
+                    if collision(gridlist[i+ rownum - 1].container, grid.container):
+                        collided.add((grid.container, gridlist[i+ rownum - 1].container))
+
+            if i + rownum + 1< len(gridlist) and (i + 1) % rownum != 0 and gridlist[i + rownum + 1].container:#NE
+                if gridlist[i + rownum+1] not in gridset:
+                    if collision(gridlist[i+ rownum + 1].container, grid.container):
+                        collided.add((grid.container, gridlist[i + rownum+ 1].container))
+
+            if i - rownum >= 0 and gridlist[i - rownum].container:#down
+                if gridlist[i - rownum] not in gridset:
+                    if collision(gridlist[i - rownum].container, grid.container):
+                        collided.add((grid.container, gridlist[i - rownum].container))
+
+            if i - rownum + 1 >= 0 and (i - 1) % rownum != 0 and gridlist[i - rownum + 1 ].container:#SW
+                if gridlist[i - rownum + 1] not in gridset:
+                    if collision(gridlist[i - rownum + 1].container, grid.container):
+                        collided.add((grid.container, gridlist[i - rownum + 1].container))
+
+            if i - rownum - 1 >= 0 and (i + 1) % rownum != 0 and gridlist[i - rownum - 1].container:#SE
+                if gridlist[i - rownum - 1] not in gridset:
+                    if collision(gridlist[i - rownum - 1].container, grid.container):
+                        collided.add((grid.container, gridlist[i - rownum - 1].container))
+
+    return collided
