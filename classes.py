@@ -8,22 +8,15 @@ class Node:
 
 class particle:
     """class for objects in simulation"""
-    def __init__(self, mass, position, velocity, acceleration, color):
+    def __init__(self, mass, position, velocity, color):
         self.mass = mass
         self.position = np.array(position)
-        self.velocity = np.array(velocity)
-        self.acceleration = np.array(acceleration)
+        self.velocity = np.array(velocity)        
         self.radius = mass
         self.color = color
     
-    """integrate acceleration to calculate velocity"""
-    def update_velocity(self, dt=1):
-        # simple Euler integration
-        self.velocity += self.acceleration * dt
-
     """integrate velocity to calculate position"""
     def update_position(self,width,height,dt=1):
-        self.update_velocity(dt)
         # simple Euler integration
         self.position += self.velocity * dt
         # keep the particle inside the screen

@@ -15,9 +15,8 @@ def  collision(particleA, particleB):
 
 def momentum_after_collision(particleA, particleB):
      # vector decompostition method
-     # change cordiate system so that x is the axis perpendicular to the 
-     # collision and y is the axis tangent to the collision
 
+     # change cordiate system so that x is the axis perpendicular to the collision and y is the axis tangent to the collision
      # set up basis vectors
      separation = particleA.position - particleB.position
      norm = np.linalg.norm(separation)
@@ -27,7 +26,7 @@ def momentum_after_collision(particleA, particleB):
           norm_axis = separation
      tan_axis = np.array([-norm_axis[1], norm_axis[0]])
      
-     # resolve velocities in the basis vectors
+     # transform velocities in the new orthonormal system
      v_an = np.dot(particleA.velocity, norm_axis)* norm_axis
      v_at = particleA.velocity - v_an
 
@@ -59,7 +58,7 @@ def grid(WIDTH, HEIGHT, side_length):
 
      return gridlist, grid_width, grid_height
 
-def hash (particle, side_length, grid_height):
+def hash_grid (particle, side_length, grid_height):
      # x coordinate on grid
      x = particle.position[0] // side_length
      
@@ -68,8 +67,7 @@ def hash (particle, side_length, grid_height):
      
      return (y*grid_height + x)
 
-def collision_search(gridlist, gridwidth):
-    
+def collision_search(gridlist, gridwidth):   
 
     queue = deque([(node, i) for i, node in enumerate(gridlist) if len(node.container)])
 
@@ -153,3 +151,7 @@ def collision_search(gridlist, gridwidth):
                         for particleB in gridlist[i - rownum - 1].container:# loop through all particles in the neighboring grid
                             if collision(particleA, particleB):
                                 momentum_after_collision(particleA, particleB)# resolve collision
+
+
+#def hash_color(highest_mass, particles):
+    
