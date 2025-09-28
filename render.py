@@ -16,8 +16,8 @@ pygame.display.set_caption("Physics Visualization")
 clock = pygame.time.Clock()
 FPS = 60
 
-a = particle(30, [300.0, 100.0],[5.0, 0.0], [0.0,2],(0, 255, 0))
-b = particle(40, [500.0, 80.0], [-5.0, 0.0], [0.0, 3], (255, 0, 0))
+a = particle(30, [300.0, 100.0],[5.0, 0.0], [0.0, 0.0],(0, 255, 0))
+b = particle(40, [500.0, 80.0], [-5.0, 0.0], [0.0, 0.0], (255, 0, 0))
 particles=[a, b]
 radius=10#to be changed by user with pygame framework
 
