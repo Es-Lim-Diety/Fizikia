@@ -16,7 +16,6 @@ def  collision(particleA, particleB):
 def momentum_after_collision(particleA, particleB):
      # vector decompostition method
 
-     # change cordiate system so that x is the axis perpendicular to the collision and y is the axis tangent to the collision
      # set up basis vectors
      separation = particleA.position - particleB.position
      norm = np.linalg.norm(separation)
@@ -67,7 +66,15 @@ def hash_grid (particle, side_length, grid_height):
      
      return (y*grid_height + x)
 
-def collision_search(gridlist, gridwidth):   
+#helper function for collision search
+def collisions(gridA,gridB):
+    for g in gridA:# loop through all particles in the grid
+        for j in gridB:# loop through all particles in the neighboring grid
+            if collision(j,g):
+                momentum_after_collision(j,g)# resolve collision
+
+# generalized use case
+def collision_search(gridlist, gridwidth):
 
     queue = deque([(node, i) for i, node in enumerate(gridlist) if len(node.container)])
 
@@ -83,75 +90,104 @@ def collision_search(gridlist, gridwidth):
         if len(grid.container):
 
             # solve collisions within grid
-            for particleA in grid.container:
-                for particleB in grid.container:
-                    if not particleA == particleB:
-                        if collision(particleA, particleB):
-                            momentum_after_collision(particleA, particleB)
+            for i in range(len(grid.container)):
+                for j in range(i,len(grid.container)):
+                    if not grid.container[i] == grid.container[j]:
+                        if collision(grid.container[i], grid.container[j]):
+                            momentum_after_collision(grid.container[i], grid.container[j])
 
             if i + 1 < len(gridlist) and (i + 1) % rownum != 0 and len(gridlist[i + 1].container):#check the grid to the east
                 if gridlist[i + 1] not in gridset:# to avoid double collision resolution
-                    for particleA in grid.container:# loop through all particles in the grid
-                        for particleB in gridlist[i + 1].container:# loop through all particles in the neighboring grid
-                            if collision(particleA, particleB):
-                                momentum_after_collision(particleA, particleB)# resolve collision                                
+                    collisions(grid.conainer, gridlist[i + 1].container)
                                 
 
-            if i - 1 >= 0 and (i - 1) % rownum != 0 and len(gridlist[i - 1].container):#check the grid to the west
+            if i - 1 >= 0 and i  % rownum != 0 and len(gridlist[i - 1].container):#check the grid to the west
                 if gridlist[i - 1] not in gridset:# to avoid double collision resolution
-                        for particleA in grid.container:# loop through all particles in the grid
-                            for particleB in gridlist[i - 1].container:# loop through all particles in the neighboring grid
-                                if collision(particleA, particleB):
-                                    momentum_after_collision(particleA, particleB)# resolve collision                                 
+                    collisions(grid.container, gridlist[i - 1].container)
                                     
 
             if i + rownum < len(gridlist) and len(gridlist[i+ rownum].container):#check the grid to the south
                 if gridlist[i + rownum] not in gridset:# to avoid double collision resolution
-                    for particleA in grid.container:# loop through all particles in the grid
-                        for particleB in gridlist[i + rownum].container:# loop through all particles in the neighboring grid
-                            if collision(particleA, particleB):
-                                momentum_after_collision(particleA, particleB)    
+                    collisions(grid.container, gridlist[i + rownum].container)
 
 
-            if i + rownum - 1< len(gridlist) and (i - 1) % rownum != 0 and len(gridlist[i + rownum - 1].container):#check the grid to the SW
+            if i + rownum - 1< len(gridlist) and i  % rownum != 0 and len(gridlist[i + rownum - 1].container):#check the grid to the SW
                 if gridlist[i + rownum - 1] not in gridset:# to avoid double collision resolution
-                    for particleA in grid.container:# loop through all particles in the grid
-                        for particleB in gridlist[i + rownum - 1].container:# loop through all particles in the neighboring grid
-                            if collision(particleA, particleB):
-                                momentum_after_collision(particleA, particleB)# resolve collision
+                    collisions(grid.container, gridlist[i + rownum - 1].container)
                                 
 
             if i + rownum + 1< len(gridlist) and (i + 1) % rownum != 0 and len(gridlist[i + rownum + 1].container):#check the grid to the SE
                 if gridlist[i + rownum+1] not in gridset:# to avoid double collision resolution
-                    for particleA in grid.container:# loop through all particles in the grid
-                        for particleB in gridlist[i + rownum + 1].container:# loop through all particles in the neighboring grid
-                            if collision(particleA, particleB):
-                                momentum_after_collision(particleA, particleB)# resolve collision
-                                
+                    collisions(grid.container, gridlist[i + rownum + 1].container)
 
             if i - rownum >= 0 and len(gridlist[i - rownum].container):#check the grid to the north
                 if gridlist[i - rownum] not in gridset:# to avoid double collision resolution
-                    for particleA in grid.container:# loop through all particles in the grid
-                        for particleB in gridlist[i - rownum].container:# loop through all particles in the neighboring grid
-                            if collision(particleA, particleB):
-                                momentum_after_collision(particleA, particleB)# resolve collision
-                                
+                    collisions(grid.container, gridlist[i - rownum].container)
 
-            if i - rownum + 1 >= 0 and (i - 1) % rownum != 0 and len(gridlist[i - rownum + 1].container):#check the grid to the NE
+            if i - rownum + 1 >= 0 and i  % rownum != 0 and len(gridlist[i - rownum + 1].container):#check the grid to the NE
                 if gridlist[i - rownum + 1] not in gridset:# to avoid double collision resolution
-                    for particleA in grid.container:# loop through all particles in the grid
-                        for particleB in gridlist[i - rownum + 1].container:# loop through all particles in the neighboring grid
-                            if collision(particleA, particleB):
-                                momentum_after_collision(particleA, particleB)# resolve collision
-                                
+                    collisions(grid.container, gridlist[i - rownum + 1].container)
 
             if i - rownum - 1 >= 0 and (i + 1) % rownum != 0 and len(gridlist[i - rownum - 1].container):#check the grid to the SW
                 if gridlist[i - rownum - 1] not in gridset:# to avoid double collision resolution
-                    for particleA in grid.container:# loop through all particles in the grid
-                        for particleB in gridlist[i - rownum - 1].container:# loop through all particles in the neighboring grid
-                            if collision(particleA, particleB):
-                                momentum_after_collision(particleA, particleB)# resolve collision
+                    collisions(grid.container, gridlist[i - rownum - 1].container)
+
+
+
+"""uniform radius version optimization"""
+def gridbfs_uniformradius(gridlist, gridwidth):
+    queue = deque([(node, i) for i, node in enumerate(gridlist) if node.container])
+
+    rownum=gridwidth
+    gridset=set()
+
+    while queue:
+
+        grid,i = queue.popleft()
+        gridset.add(grid)
+
+        if grid.container:
+            if i + 1 < len(gridlist) and (i + 1) % rownum != 0 and gridlist[i + 1].container:
+                if gridlist[i + 1] not in gridset:
+                    if collision(gridlist[i + 1].container, grid.container):
+                        momentum_after_collision(gridlist[i + 1].container, grid.container)
+
+            if i - 1 >= 0 and i % rownum != 0 and gridlist[i - 1].container:
+                if gridlist[i - 1] not in gridset:
+                    if collision(gridlist[i - 1].container, grid.container):
+                        momentum_after_collision(grid.container, gridlist[i - 1].container)
+
+            if i + rownum < len(gridlist) and gridlist[i+ rownum].container:#up
+                if gridlist[i + rownum] not in gridset:
+                    if collision(gridlist[i + rownum].container, grid.container):
+                       momentum_after_collision(grid.container,gridlist[i + rownum].container)
+
+            if i + rownum - 1< len(gridlist) and i  % rownum != 0 and gridlist[i + rownum - 1].container:#NW
+                if gridlist[i + rownum - 1] not in gridset:
+                    if collision(gridlist[i+ rownum - 1].container, grid.container):
+                        momentum_after_collision(grid.container, gridlist[i + rownum - 1].container)
+
+            if i + rownum + 1< len(gridlist) and (i + 1) % rownum != 0 and gridlist[i + rownum + 1].container:#NE
+                if gridlist[i + rownum+1] not in gridset:
+                    if collision(gridlist[i+ rownum + 1].container, grid.container):
+                        momentum_after_collision(grid.container, gridlist[i + rownum + 1].container)
+
+            if i - rownum >= 0 and gridlist[i - rownum].container:#down
+                if gridlist[i - rownum] not in gridset:
+                    if collision(gridlist[i - rownum].container, grid.container):
+                        momentum_after_collision(grid.container, gridlist[i - rownum].container)
+
+            if i - rownum + 1 >= 0 and i  % rownum != 0 and gridlist[i - rownum + 1 ].container:#SW
+                if gridlist[i - rownum + 1] not in gridset:
+                    if collision(gridlist[i - rownum + 1].container, grid.container):
+                        momentum_after_collision(grid.container, gridlist[i - rownum + 1].container)
+
+            if i - rownum - 1 >= 0 and (i + 1) % rownum != 0 and gridlist[i - rownum - 1].container:#SE
+                if gridlist[i - rownum - 1] not in gridset:
+                    if collision(gridlist[i - rownum - 1].container, grid.container):
+                        momentum_after_collision(grid.container, gridlist[i - rownum - 1].container)
+
+
 
 
 #def hash_color(highest_mass, particles):
-    
