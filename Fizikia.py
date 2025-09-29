@@ -10,14 +10,20 @@ def  collision(particleA, particleB):
        separation_vector = particleA.position - particleB.position
        separation = np.linalg.norm(separation_vector)
        LowerBound = particleA.radius + particleB.radius
+       
 
-       return  separation <= LowerBound
+       return  abs(separation) <= LowerBound
 
 def momentum_after_collision(particleA, particleB):
      # vector decompostition method
 
      # set up basis vectors
      separation = particleA.position - particleB.position
+
+    # separate the particles
+     particleA.position += separation/2
+     particleB.position -= separation/2
+
      norm = np.linalg.norm(separation)
      if not norm == 0:
           norm_axis = separation / norm
