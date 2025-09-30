@@ -1,4 +1,5 @@
 Fizikia
+
 Fizikia is a Python-based 2D particle simulation and visualization tool built with Pygame and pygame_gui. It allows users to configure, simulate, and visualize the motion and collisions of particles in a customizable environment.
 
 Features
