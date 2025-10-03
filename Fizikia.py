@@ -63,14 +63,7 @@ def grid(WIDTH, HEIGHT, side_length):
 
      return gridlist, grid_width, grid_height
 
-def hash_grid (particle, side_length, grid_height):
-     # x coordinate on grid
-     x = particle.position[0] // side_length
-     
-     # y coordinates on grid
-     y = particle.position[1] // side_length
-     
-     return (y*grid_height + x)
+
 def revhash_grid (grid_position, grid_width,sidelength):
     y=(grid_position // grid_width)*sidelength
     x=(grid_position % grid_width)*sidelength
