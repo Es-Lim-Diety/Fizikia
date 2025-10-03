@@ -34,7 +34,7 @@ class particle:
         # y coordinates on grid
         y = self.position[1] // side_length
 
-        return (y * grid_height + x)
+        return (int(y * grid_height + x))
 
     def wall_sep(self, width, height):
         if self.position[0] > width:

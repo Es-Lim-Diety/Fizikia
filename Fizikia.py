@@ -110,7 +110,7 @@ def collision_search(gridlist, gridwidth):
 
             if i + 1 < len(gridlist) and (i + 1) % rownum != 0 and len(gridlist[i + 1].container):#check the grid to the east
                 if gridlist[i + 1] not in gridset:# to avoid double collision resolution
-                    collisions(grid.conainer, gridlist[i + 1].container)
+                    collisions(grid.container, gridlist[i + 1].container)
                                 
 
             if i - 1 >= 0 and i  % rownum != 0 and len(gridlist[i - 1].container):#check the grid to the west

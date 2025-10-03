@@ -12,7 +12,7 @@ WIDTH, HEIGHT = 1280, 720
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Particle Setup")
 clock = pygame.time.Clock()
-FPS = 120
+FPS = 30
 dt = 0
 font = pygame.font.SysFont(None, 24)
 
