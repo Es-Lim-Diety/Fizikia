@@ -71,7 +71,19 @@ def hash_grid (particle, side_length, grid_height):
      y = particle.position[1] // side_length
      
      return (y*grid_height + x)
+def revhash_grid (grid_position, grid_width):
+    y=grid_position // grid_width
+    x=grid_position % grid_width
+    return(x,y)
 
+def velocity(centerx,centery,px,py):
+    dx=centerx-px
+    dy=centery-py
+    magnitude=np.sqrt((dx*dx)+(dy*dy))
+    speed=5
+    vx=(dx/magnitude)*speed
+    vy=(dy/magnitude)*speed
+    return (vx,vy)
 #helper function for collision search
 def collisions(gridA,gridB):
     for g in gridA:# loop through all particles in the grid

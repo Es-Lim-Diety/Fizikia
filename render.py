@@ -97,6 +97,17 @@ while running:
                     num = int(particle_slider.get_current_value())
                     radius = int(radius_slider.get_current_value())
                     mass = int(mass_slider.get_current_value())
+
+                    """if equal_mode:
+                        gridlist, gridwidth, gridheight = grid(WIDTH, HEIGHT, 10)
+                        incr=len(gridlist)/num
+                        idx=0
+                        for i in range(num):
+                            position=gridlist[idx].position
+                            x,y=revhash_grid(position, gridwidth)
+                            vx,vy=velocity(WIDTH/2,HEIGHT/2,x,y)
+                            particles+=[particle(mass,[x,y],[vx,vy],'',5)]
+                            idx+=incr"""
                     
                     STATE = "simulation"
 
