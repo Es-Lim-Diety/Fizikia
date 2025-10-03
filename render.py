@@ -54,13 +54,14 @@ start_button = pygame_gui.elements.UIButton(
 # --- Game State ---
 STATE = "menu"
 equal_mode = True
+"""
 a = particle(20, [(500), 100.0],[20.0, 0.0], 'green')
 b = particle(25, [(600), 90.0], [-20.0, 0.0], 'red')
 c = particle(30, [(700), 80.0], [-20.0, 0.0], 'blue')
 d = particle(35, [(800), 70.0], [-20.0, 0.0], 'white')
 e = particle(40, [(900), 60.0], [-20.0, 0.0], 'purple')
-particles=[a, b, c, d, e] # will hold simulation particles
-
+particles=[a, b, c, d, e] # will hold simulation particles"""
+particles=[]
 
 # --- Main Loop ---
 running = True
@@ -98,16 +99,16 @@ while running:
                     radius = int(radius_slider.get_current_value())
                     mass = int(mass_slider.get_current_value())
 
-                    """if equal_mode:
+                    if equal_mode:
                         gridlist, gridwidth, gridheight = grid(WIDTH, HEIGHT, 10)
-                        incr=len(gridlist)/num
+                        incr=math.floor((len(gridlist)/num))
                         idx=0
                         for i in range(num):
                             position=gridlist[idx].position
-                            x,y=revhash_grid(position, gridwidth)
+                            x,y=revhash_grid(position, gridwidth,10)
                             vx,vy=velocity(WIDTH/2,HEIGHT/2,x,y)
-                            particles+=[particle(mass,[x,y],[vx,vy],'',5)]
-                            idx+=incr"""
+                            particles+=[particle(5,[x,y],[vx,vy],'green',5)]
+                            idx+=incr
                     
                     STATE = "simulation"
 
