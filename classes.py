@@ -2,21 +2,21 @@ import numpy as np
 
 class Node:
     def __init__(self,position):
-        self.position = position
+        self.position = position#
         self.container=[]
 
 
 class particle:
     """class for objects in simulation"""
-    def __init__(self, mass, position, velocity, color):
+    def __init__(self, mass, position, velocity, color,radius):
         self.mass = mass
         self.position = np.array(position)
         self.velocity = np.array(velocity)        
-        self.radius = mass
+        self.radius = radius if radius is not None else mass
         self.color = color
     
     """integrate velocity to calculate position"""
-    def update_position(self,width,height,dt=1):
+    def update_position(self,width,height,dt=0.1):
         # simple Euler integration
         self.position += self.velocity * dt
         # keep the particle inside the screen
