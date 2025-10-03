@@ -76,6 +76,7 @@ def revhash_grid (grid_position, grid_width,sidelength):
     x=(grid_position % grid_width)*sidelength
     return(float(x),float(y))
 
+
 def velocity(centerx,centery,px,py):
     dx=centerx-px
     dy=centery-py
