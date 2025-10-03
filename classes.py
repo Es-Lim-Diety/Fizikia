@@ -1,8 +1,11 @@
 import numpy as np
 
+from Fizikia import hash_grid
+
+
 class Node:
     def __init__(self,position):
-        self.position = position#
+        self.position = position
         self.container=[]
 
 
@@ -16,7 +19,7 @@ class particle:
         self.color = color
     
     """integrate velocity to calculate position"""
-    def update_position(self,width,height,dt=0.1):
+    def update_position(self,width,height,sidelength,gridheight,gridlist,dt=0.1):
         # simple Euler integration
         self.position += self.velocity * dt
         # keep the particle inside the screen
@@ -28,11 +31,14 @@ class particle:
             self.position[0] = 0 + self.radius
         if self.position[1] < 0:
             self.position[1] = 0 + self.radius
+        i=hash_grid(self.position,sidelength,gridheight)
+        gridlist[i].container.append(self)
 
     def wall_collision(self, middle):
         # check collision with vertical wall
         distance_from_middle_x = abs(self.position[0] - middle[0])
         allowed_distance_from_middle_x = middle[0] - self.radius
+
         # resolve collision
         if distance_from_middle_x >= allowed_distance_from_middle_x:
             norm_axis = np.array([1,0])

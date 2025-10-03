@@ -4,7 +4,7 @@ from classes import *
 
 # import macros
 """ Screen dimensions """
-WIDTH, HEIGHT = 800, 600
+WIDTH, HEIGHT = 1280, 720
 
 def  collision(particleA, particleB):
        separation_vector = particleA.position - particleB.position
@@ -71,10 +71,11 @@ def hash_grid (particle, side_length, grid_height):
      y = particle.position[1] // side_length
      
      return (y*grid_height + x)
-def revhash_grid (grid_position, grid_width):
-    y=grid_position // grid_width
-    x=grid_position % grid_width
-    return(x,y)
+def revhash_grid (grid_position, grid_width,sidelength):
+    y=(grid_position // grid_width)*sidelength
+    x=(grid_position % grid_width)*sidelength
+    return(float(x),float(y))
+
 
 def velocity(centerx,centery,px,py):
     dx=centerx-px
@@ -204,8 +205,3 @@ def gridbfs_uniformradius(gridlist, gridwidth):
                 if gridlist[i - rownum - 1] not in gridset:
                     if collision(gridlist[i - rownum - 1].container, grid.container):
                         momentum_after_collision(grid.container, gridlist[i - rownum - 1].container)
-
-
-
-
-#def hash_color(highest_mass, particles):
