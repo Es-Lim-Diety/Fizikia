@@ -6,7 +6,7 @@ from Fizikia import*
 class Node:
     def __init__(self,position):
         self.position = position
-        self.container=[]
+        self.container=set()
 
 
 class particle:
@@ -20,12 +20,17 @@ class particle:
     
     """integrate velocity to calculate position"""
     def update_position(self,width,height,sidelength,gridheight,gridlist,dt=0.1):
+        i = self.hash_grid(sidelength, gridheight)
+        if self in gridlist[i].container:        
+            gridlist[i].container.remove(self)
+        
+
         # simple Euler integration
         self.position += self.velocity * dt
         # keep the particle inside the screen
         self.wall_sep(width,height)
         i = self.hash_grid( sidelength, gridheight)
-        gridlist[i].container.append(self)
+        gridlist[i].container.add(self)
 
     def hash_grid(self, side_length, grid_height):
         # x coordinate on grid
@@ -37,14 +42,20 @@ class particle:
         return (int(y * grid_height + x))
 
     def wall_sep(self, width, height):
+        flag=False
         if self.position[0] > width:
+            flag=True
             self.position[0] = width - self.radius
         if self.position[1] > height:
+            flag=True
             self.position[1] = height - self.radius
         if self.position[0] < 0:
+            flag=True
             self.position[0] = 0 + self.radius
         if self.position[1] < 0:
+            flag=True
             self.position[1] = 0 + self.radius
+        return flag
 
     def wall_collision(self,width,height,sidelength,gridheight,gridlist):
         # check collision with vertical wall
@@ -64,6 +75,9 @@ class particle:
         if distance_from_middle_y >= allowed_distance_from_middle_y:
              norm_axis = np.array([0, 1])
              self.velocity -= 2* np.dot(self.velocity, norm_axis) * norm_axis
-        self.wall_sep(width,height)
         i = self.hash_grid(sidelength, gridheight)
-        gridlist[i].container.append(self)
+        if self in gridlist[i].container:
+            gridlist[i].container.remove(self)
+        if self.wall_sep(width,height):
+            i = self.hash_grid(sidelength, gridheight)
+        gridlist[i].container.add(self)

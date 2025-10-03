@@ -12,7 +12,7 @@ WIDTH, HEIGHT = 1280, 720
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Particle Setup")
 clock = pygame.time.Clock()
-FPS = 30
+FPS = 60
 dt = 0
 font = pygame.font.SysFont(None, 24)
 
@@ -23,7 +23,7 @@ manager = pygame_gui.UIManager((WIDTH, HEIGHT))
 
 # --- Menu Widgets ---
 particle_slider = pygame_gui.elements.UIHorizontalSlider(
-    relative_rect=pygame.Rect((250, 100), (300, 40)), start_value=10, value_range=(1, 100), manager=manager
+    relative_rect=pygame.Rect((250, 100), (300, 40)), start_value=10, value_range=(1, 1000), manager=manager
     )
 label_particle_slider = pygame_gui.elements.UILabel(
     relative_rect=pygame.Rect(560, 100, 200, 40), text=f"Number of particle: {particle_slider.get_current_value():.0f}", manager=manager
@@ -67,7 +67,7 @@ particles=[]
 running = True
 while running:
 
-    dt = clock.tick(FPS) * 60 / 1000.0
+    dt = clock.tick(FPS) *60 / 1000.0
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -122,8 +122,8 @@ while running:
 
     elif STATE == "simulation":
         pygame.display.set_caption("Physics Visualization")
-
-        collision_search(gridlist,gridwidth)
+        gridbfs_uniformradius(gridlist,gridwidth)
+        #collision_search(gridlist,gridwidth)
 
         # resolve collisions with the wall
         for particle in particles:
@@ -142,5 +142,8 @@ while running:
             pygame.draw.circle(screen, p.color, tuple(p.position), p.radius)
         
     pygame.display.flip()
+    fps = clock.get_fps()
+    print(f"FPS: {fps:.1f}")
+
 
 pygame.quit()
