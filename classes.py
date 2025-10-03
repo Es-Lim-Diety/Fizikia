@@ -1,6 +1,6 @@
 import numpy as np
 
-from Fizikia import hash_grid
+from Fizikia import*
 
 
 class Node:
@@ -23,19 +23,32 @@ class particle:
         # simple Euler integration
         self.position += self.velocity * dt
         # keep the particle inside the screen
+        self.wall_sep(width,height)
+        i = self.hash_grid( sidelength, gridheight)
+        gridlist[i].container.append(self)
+
+    def hash_grid(self, side_length, grid_height):
+        # x coordinate on grid
+        x = self.position[0] // side_length
+
+        # y coordinates on grid
+        y = self.position[1] // side_length
+
+        return (y * grid_height + x)
+
+    def wall_sep(self, width, height):
         if self.position[0] > width:
             self.position[0] = width - self.radius
         if self.position[1] > height:
             self.position[1] = height - self.radius
-        if self.position[0] <0:
+        if self.position[0] < 0:
             self.position[0] = 0 + self.radius
         if self.position[1] < 0:
             self.position[1] = 0 + self.radius
-        i=hash_grid(self.position,sidelength,gridheight)
-        gridlist[i].container.append(self)
 
-    def wall_collision(self, middle):
+    def wall_collision(self,width,height,sidelength,gridheight,gridlist):
         # check collision with vertical wall
+        middle=[width/2, height/2]
         distance_from_middle_x = abs(self.position[0] - middle[0])
         allowed_distance_from_middle_x = middle[0] - self.radius
 
@@ -51,3 +64,6 @@ class particle:
         if distance_from_middle_y >= allowed_distance_from_middle_y:
              norm_axis = np.array([0, 1])
              self.velocity -= 2* np.dot(self.velocity, norm_axis) * norm_axis
+        self.wall_sep(width,height)
+        i = self.hash_grid(sidelength, gridheight)
+        gridlist[i].container.append(self)

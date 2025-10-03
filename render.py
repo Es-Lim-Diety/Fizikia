@@ -101,6 +101,7 @@ while running:
 
                     if equal_mode:
                         gridlist, gridwidth, gridheight = grid(WIDTH, HEIGHT, 10)
+                        sidelength=10
                         incr=math.floor((len(gridlist)/num))
                         idx=0
                         for i in range(num):
@@ -122,19 +123,15 @@ while running:
     elif STATE == "simulation":
         pygame.display.set_caption("Physics Visualization")
 
-        for particleA in particles:
-            for particleB in particles:
-                if not particleA == particleB:
-                    if collision(particleA, particleB):
-                        momentum_after_collision(particleA, particleB)
+        collision_search(gridlist,gridwidth)
 
         # resolve collisions with the wall
         for particle in particles:
-            particle.wall_collision([WIDTH/2, HEIGHT/2])
+            particle.wall_collision(WIDTH, HEIGHT,sidelength,gridheight,gridlist)
 
         # update particle positions
         for particle in particles:
-            particle.update_position(WIDTH, HEIGHT, dt)
+            particle.update_position(WIDTH, HEIGHT,sidelength,gridheight,gridlist, dt)
 
         # -- Rendering --
         screen.fill("black")  # clear screen with black
