@@ -80,12 +80,14 @@ def velocity(centerx,centery,px,py):
     vx=(dx/magnitude)*speed
     vy=(dy/magnitude)*speed
     return (vx,vy)
+
 #helper function for collision search
 def collisions(gridA,gridB):
     for g in gridA:# loop through all particles in the grid
         for j in gridB:# loop through all particles in the neighboring grid
             if collision(j,g):
                 momentum_after_collision(j,g)# resolve collision
+
 def internal_collisions(grid):
     for i in grid:
         for j in grid:
@@ -166,6 +168,13 @@ def gridbfs_uniformradius(gridlist, gridwidth):
         if grid.container:
             # check for collisions with neighboring grids
             # only run check if the grid is not empty
+            
+            #check internal collisions first
+            particlea=next(iter(grid.container))
+            for particle in grid.container:
+                if particlea!=particle:
+                    momentum_after_collision(particlea,particle)
+        
             if i + 1 < len(gridlist) and (i + 1) % rownum != 0 and gridlist[i + 1].container:
                 if gridlist[i + 1] not in gridset:
                     if collision(next(iter(gridlist[i + 1].container)), next(iter(grid.container))):
