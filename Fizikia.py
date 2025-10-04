@@ -84,7 +84,12 @@ def collisions(gridA,gridB):
         for j in gridB:# loop through all particles in the neighboring grid
             if collision(j,g):
                 momentum_after_collision(j,g)# resolve collision
-
+def internal_collisions(grid):
+    for i in grid:
+        for j in grid:
+            if not i == j:
+                if collision(i,j):
+                    momentum_after_collision(i, j)
 # generalized use case
 def collision_search(gridlist, gridwidth):
 
@@ -102,11 +107,7 @@ def collision_search(gridlist, gridwidth):
         if len(grid.container):
 
             # solve collisions within grid
-            for i in range(len(grid.container)):
-                for j in range(i,len(grid.container)):
-                    if not grid.container[i] == grid.container[j]:
-                        if collision(grid.container[i], grid.container[j]):
-                            momentum_after_collision(grid.container[i], grid.container[j])
+            internal_collisions(grid.container)
 
             if i + 1 < len(gridlist) and (i + 1) % rownum != 0 and len(gridlist[i + 1].container):#check the grid to the east
                 if gridlist[i + 1] not in gridset:# to avoid double collision resolution
@@ -161,40 +162,40 @@ def gridbfs_uniformradius(gridlist, gridwidth):
         if grid.container:
             if i + 1 < len(gridlist) and (i + 1) % rownum != 0 and gridlist[i + 1].container:
                 if gridlist[i + 1] not in gridset:
-                    if collision(gridlist[i + 1].container, grid.container):
-                        momentum_after_collision(gridlist[i + 1].container, grid.container)
+                    if collision(next(iter(gridlist[i + 1].container)), next(iter(grid.container))):
+                        momentum_after_collision(next(iter(gridlist[i + 1].container)), next(iter(grid.container)))
 
             if i - 1 >= 0 and i % rownum != 0 and gridlist[i - 1].container:
                 if gridlist[i - 1] not in gridset:
-                    if collision(gridlist[i - 1].container, grid.container):
-                        momentum_after_collision(grid.container, gridlist[i - 1].container)
+                    if collision(next(iter(gridlist[i - 1].container)), next(iter(grid.container))):
+                        momentum_after_collision(next(iter(grid.container)), next(iter(gridlist[i - 1].container)))
 
             if i + rownum < len(gridlist) and gridlist[i+ rownum].container:#up
                 if gridlist[i + rownum] not in gridset:
-                    if collision(gridlist[i + rownum].container, grid.container):
-                       momentum_after_collision(grid.container,gridlist[i + rownum].container)
+                    if collision(next(iter(gridlist[i + rownum].container)), next(iter(grid.container))):
+                       momentum_after_collision(next(iter(grid.container)), next(iter(gridlist[i + rownum].container)))
 
             if i + rownum - 1< len(gridlist) and i  % rownum != 0 and gridlist[i + rownum - 1].container:#NW
                 if gridlist[i + rownum - 1] not in gridset:
-                    if collision(gridlist[i+ rownum - 1].container, grid.container):
-                        momentum_after_collision(grid.container, gridlist[i + rownum - 1].container)
+                    if collision(next(iter(gridlist[i+ rownum - 1].container)), next(iter(grid.container))):
+                        momentum_after_collision(next(iter(grid.container)), next(iter(gridlist[i + rownum - 1].container)))
 
             if i + rownum + 1< len(gridlist) and (i + 1) % rownum != 0 and gridlist[i + rownum + 1].container:#NE
                 if gridlist[i + rownum+1] not in gridset:
-                    if collision(gridlist[i+ rownum + 1].container, grid.container):
-                        momentum_after_collision(grid.container, gridlist[i + rownum + 1].container)
+                    if collision(next(iter(gridlist[i+ rownum + 1].container)), next(iter(grid.container))):
+                        momentum_after_collision(next(iter(grid.container)), next(iter(gridlist[i + rownum + 1].container)))
 
             if i - rownum >= 0 and gridlist[i - rownum].container:#down
                 if gridlist[i - rownum] not in gridset:
-                    if collision(gridlist[i - rownum].container, grid.container):
-                        momentum_after_collision(grid.container, gridlist[i - rownum].container)
+                    if collision(next(iter(gridlist[i - rownum].container)), next(iter(grid.container))):
+                        momentum_after_collision(next(iter(grid.container)), next(iter(gridlist[i - rownum].container)))
 
             if i - rownum + 1 >= 0 and i  % rownum != 0 and gridlist[i - rownum + 1 ].container:#SW
                 if gridlist[i - rownum + 1] not in gridset:
-                    if collision(gridlist[i - rownum + 1].container, grid.container):
-                        momentum_after_collision(grid.container, gridlist[i - rownum + 1].container)
+                    if collision(next(iter(gridlist[i - rownum + 1].container)), next(iter(grid.container))):
+                        momentum_after_collision(next(iter(grid.container)), next(iter(gridlist[i - rownum + 1].container)))
 
             if i - rownum - 1 >= 0 and (i + 1) % rownum != 0 and gridlist[i - rownum - 1].container:#SE
                 if gridlist[i - rownum - 1] not in gridset:
-                    if collision(gridlist[i - rownum - 1].container, grid.container):
-                        momentum_after_collision(grid.container, gridlist[i - rownum - 1].container)
+                    if collision(next(iter(gridlist[i - rownum - 1].container)), next(iter(grid.container))):
+                        momentum_after_collision(next(iter(grid.container)), next(iter(gridlist[i - rownum - 1].container)))
