@@ -49,19 +49,21 @@ def momentum_after_collision(particleA, particleB):
 """support functions for rendering"""
 # create data structure for the grid
 def grid(WIDTH, HEIGHT, side_length):
-     grid_width = math.ceil(WIDTH / side_length)
-     grid_height = math.ceil(HEIGHT / side_length)
-     num_grids = grid_width * grid_height
-
-     gridlist = []
-     for i in range(num_grids):
+    grid_width = math.ceil(WIDTH / side_length)
+    grid_height = math.ceil(HEIGHT / side_length)
+    num_grids = grid_width * grid_height
+    wallgrids=set()
+    gridlist = []
+    for i in range(num_grids):
           row = i // grid_width
           col = i % grid_width
           # only include grids fully inside the screen
           if col * side_length < WIDTH and row * side_length < HEIGHT:
                gridlist.append(Node(i))
+          if col==0 or col==grid_width-1 or row==0 or row==grid_height-1:
+               wallgrids.add(gridlist[i])     
 
-     return gridlist, grid_width, grid_height
+    return wallgrids,gridlist, grid_width, grid_height
 
 
 def revhash_grid (grid_position, grid_width,sidelength):
@@ -149,17 +151,21 @@ def collision_search(gridlist, gridwidth):
 
 """uniform radius version optimization"""
 def gridbfs_uniformradius(gridlist, gridwidth):
+    #finds grids with particles and adds them to the queue
     queue = deque([(node, i) for i, node in enumerate(gridlist) if node.container])
 
     rownum=gridwidth
     gridset=set()
 
     while queue:
-
+        # pop the first grid in the queue and its position in list
         grid,i = queue.popleft()
+        # add the grid to the set of visited grids
         gridset.add(grid)
 
         if grid.container:
+            # check for collisions with neighboring grids
+            # only run check if the grid is not empty
             if i + 1 < len(gridlist) and (i + 1) % rownum != 0 and gridlist[i + 1].container:
                 if gridlist[i + 1] not in gridset:
                     if collision(next(iter(gridlist[i + 1].container)), next(iter(grid.container))):

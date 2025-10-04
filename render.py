@@ -100,7 +100,7 @@ while running:
                     mass = int(mass_slider.get_current_value())
 
                     if equal_mode:
-                        gridlist, gridwidth, gridheight = grid(WIDTH, HEIGHT, 10)
+                        wallgrids, gridlist, gridwidth, gridheight = grid(WIDTH, HEIGHT, 10)
                         sidelength=10
                         incr=math.floor((len(gridlist)/num))
                         idx=0
@@ -126,8 +126,9 @@ while running:
         #collision_search(gridlist,gridwidth)
 
         # resolve collisions with the wall
-        for particle in particles:
-            particle.wall_collision(WIDTH, HEIGHT,sidelength,gridheight,gridlist)
+        for particle in wallgrids:
+            if particle.container:
+                (next(iter(particle.container))).wall_collision(WIDTH, HEIGHT,sidelength,gridheight,gridlist)
 
         # update particle positions
         for particle in particles:
