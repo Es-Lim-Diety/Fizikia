@@ -122,17 +122,17 @@ while running:
 
     elif STATE == "simulation":
         pygame.display.set_caption("Physics Visualization")
-        gridbfs_uniformradius(gridlist,gridwidth)
-        #collision_search(gridlist,gridwidth)
+        #gridbfs_uniformradius(gridlist,gridwidth)
+        collision_search(gridlist,gridwidth)
 
         # resolve collisions with the wall
         for particle in wallgrids:
             if particle.container:
-                (next(iter(particle.container))).wall_collision(WIDTH, HEIGHT,sidelength,gridheight,gridlist)
+                (next(iter(particle.container))).wall_collision(WIDTH, HEIGHT)
 
         # update particle positions
         for particle in particles:
-            particle.update_position(WIDTH, HEIGHT,sidelength,gridheight,gridlist, dt)
+            particle.update_position(WIDTH, HEIGHT,sidelength,gridwidth,gridlist,dt)
 
         # -- Rendering --
         screen.fill("black")  # clear screen with black

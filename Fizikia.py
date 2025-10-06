@@ -1,5 +1,6 @@
 import math
 from collections import deque
+import numpy as np
 from classes import *
 
 # import macros
@@ -20,12 +21,14 @@ def momentum_after_collision(particleA, particleB):
      # set up basis vectors
      separation = particleA.position - particleB.position
 
-    # separate the particles
-     particleA.position += separation/2
-     particleB.position -= separation/2
+    # assign separation vectors to particles for position update math
+     particleA.seperation = separation/2
+     particleB.seperation = -(separation/2)
 
+    
      norm = np.linalg.norm(separation)
-     if not norm == 0:
+     #avoid nan errors and division by zero!!
+     if  norm != 0 and  not np.isnan(norm):
           norm_axis = separation / norm
      else:
           norm_axis = separation
