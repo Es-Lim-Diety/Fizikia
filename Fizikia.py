@@ -1,5 +1,6 @@
 import math
 from collections import deque
+import numpy as np
 from classes import *
 
 # import macros
@@ -20,12 +21,14 @@ def momentum_after_collision(particleA, particleB):
      # set up basis vectors
      separation = particleA.position - particleB.position
 
-    # separate the particles
-     particleA.position += separation/2
-     particleB.position -= separation/2
+    # assign separation vectors to particles for position update math
+     particleA.seperation = separation/2
+     particleB.seperation = -(separation/2)
 
+    
      norm = np.linalg.norm(separation)
-     if not norm == 0:
+     #avoid nan errors and division by zero!!
+     if  norm != 0 and  not np.isnan(norm):
           norm_axis = separation / norm
      else:
           norm_axis = separation
@@ -83,10 +86,26 @@ def velocity(centerx,centery,px,py):
 
 #helper function for collision search
 def collisions(gridA,gridB):
-    for g in gridA:# loop through all particles in the grid
-        for j in gridB:# loop through all particles in the neighboring grid
-            if collision(j,g):
-                momentum_after_collision(j,g)# resolve collision
+    if len(gridA)>1 and len(gridB)>1:
+        for g in gridA:# loop through all particles in the grid
+            for j in gridB:# loop through all particles in the neighboring grid
+                if collision(j,g):
+                    momentum_after_collision(j,g)# resolve collision
+    elif len(gridA)==1 and len(gridB)>1:
+        particleA=next(iter(gridA))
+        for j in gridB:
+            if collision(j,particleA):
+                momentum_after_collision(j,particleA)
+    elif len(gridB)==1 and len(gridA)>1:
+        particleB=next(iter(gridB))
+        for i in gridA:
+            if collision(i,particleB):
+                momentum_after_collision(i,particleB)
+    else:# both grids have only one particle
+        particleA=next(iter(gridA))
+        particleB=next(iter(gridB))
+        if collision(particleA,particleB):
+            momentum_after_collision(particleA,particleB)                                        
 
 def internal_collisions(grid):
     for i in grid:
@@ -111,7 +130,8 @@ def collision_search(gridlist, gridwidth):
         if len(grid.container):
 
             # solve collisions within grid
-            internal_collisions(grid.container)
+            if len(grid.container)>1:
+                internal_collisions(grid.container)
 
             if i + 1 < len(gridlist) and (i + 1) % rownum != 0 and len(gridlist[i + 1].container):#check the grid to the east
                 if gridlist[i + 1] not in gridset:# to avoid double collision resolution
@@ -170,10 +190,11 @@ def gridbfs_uniformradius(gridlist, gridwidth):
             # only run check if the grid is not empty
             
             #check internal collisions first
-            particlea=next(iter(grid.container))
-            for particle in grid.container:
-                if particlea!=particle:
-                    momentum_after_collision(particlea,particle)
+            if len(grid.container)>1:
+                particlea=next(iter(grid.container))
+                for particle in grid.container:
+                    if particlea!=particle:
+                        momentum_after_collision(particlea,particle)
         
             if i + 1 < len(gridlist) and (i + 1) % rownum != 0 and gridlist[i + 1].container:
                 if gridlist[i + 1] not in gridset:
