@@ -7,21 +7,19 @@ from classes import*
 """Initialize Pygame"""
 pygame.init()
 
-# --- Setup ---
+# setup
 WIDTH, HEIGHT = 1280, 720
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Particle Setup")
 clock = pygame.time.Clock()
 FPS = 60
 dt = 0
-font = pygame.font.SysFont(None, 24)
-
 # UI Manager
 manager = pygame_gui.UIManager((WIDTH, HEIGHT))
 
 
 
-# --- Menu Widgets ---
+# menu widgets
 particle_slider = pygame_gui.elements.UIHorizontalSlider(
     relative_rect=pygame.Rect((250, 100), (300, 40)), start_value=10, value_range=(1, 1000), manager=manager
     )
@@ -51,19 +49,12 @@ start_button = pygame_gui.elements.UIButton(
     relative_rect=pygame.Rect((250, 340), (300, 40)), text="Start Simulation", manager=manager
     )
 
-# --- Game State ---
+# game state
 STATE = "menu"
 equal_mode = True
-"""
-a = particle(20, [(500), 100.0],[20.0, 0.0], 'green')
-b = particle(25, [(600), 90.0], [-20.0, 0.0], 'red')
-c = particle(30, [(700), 80.0], [-20.0, 0.0], 'blue')
-d = particle(35, [(800), 70.0], [-20.0, 0.0], 'white')
-e = particle(40, [(900), 60.0], [-20.0, 0.0], 'purple')
-particles=[a, b, c, d, e] # will hold simulation particles"""
 particles=[]
 
-# --- Main Loop ---
+# main loop
 running = True
 while running:
 
@@ -102,18 +93,27 @@ while running:
                     if equal_mode:
                         wallgrids, gridlist, gridwidth, gridheight = grid(WIDTH, HEIGHT, 10)
                         sidelength=10
-                        incr=math.floor((len(gridlist)/num))
+                        incr=math.floor((len(gridlist) / num))
                         idx=0
                         for i in range(num):
-                            position=gridlist[idx].position
-                            x,y=revhash_grid(position, gridwidth,10)
-                            vx,vy=velocity(WIDTH/2,HEIGHT/2,x,y)
-                            particles+=[particle(5,[x,y],[vx,vy],'green',5)]
-                            idx+=incr
-                    
+                            position = gridlist[idx].position
+                            x, y = revhash_grid(position, gridwidth,10)
+                            vx, vy = velocity([WIDTH/2, HEIGHT/2], [x, y])
+                            particles += [particle(5, [x, y], [vx, vy], 'green', 5)]
+                            idx += incr
+                        # create a dictionary to make it easy to identify particles
+                        particles_to_index_map = {id(p): i for i, p in enumerate(particles)}
+                        # fetch the positions, velocities and masses of every particle and store in a numpy array (will be useful for collision resolution)
+                        position_data = [p.position for p in particles]
+                        velocity_data = [p.velocity for p in particles]
+                        mass_data = [p.mass for p in particles]
+                        positions = np.array(position_data, dtype=float)
+                        velocities = np.array(velocity_data, dtype=float)
+                        # reshape to make sure its a column vector
+                        masses = np.array(mass_data, dtype=float).reshape(-1, 1)
                     STATE = "simulation"
 
-    # --- Drawing ---    
+    # drawing
 
     if STATE == "menu":
         screen.fill((20, 20, 20))
@@ -122,29 +122,40 @@ while running:
 
     elif STATE == "simulation":
         pygame.display.set_caption("Physics Visualization")
-        #gridbfs_uniformradius(gridlist,gridwidth)
-        collision_search(gridlist,gridwidth)
+        # handle collisions between particles
+        # find all the collision pairs
+        collision_matrix = collision_search(gridlist, gridwidth, particles_to_index_map)
 
-        # resolve collisions with the wall
-        for particle in wallgrids:
-            if particle.container:
-                (next(iter(particle.container))).wall_collision(WIDTH, HEIGHT)
+        # resolve collisions, but the output will be stored in the velocity array
+        if collision_matrix.size > 0:
+            resolve_collisions_numpy(collision_matrix, positions, velocities, masses)
+
+        # get the unique indices of all the particles involved in a collision
+        all_colliding_indices = np.unique(collision_matrix.flatten())
+    
+        for idx in all_colliding_indices:
+            # Get the particle object from your master list
+            particle_object = particles[idx]            
+            # Get the new velocity from the updated NumPy array
+            new_velocity = velocities[idx]            
+            # Assign the new velocity back to the object's attribute
+            particle_object.velocity = new_velocity
+
+        # handle collisions between particles with the wall (only considering grids at the edge of the screen)
+        for grid in wallgrids:
+            if grid.container:
+                (next(iter(grid.container))).wall_collision(WIDTH, HEIGHT)
 
         # update particle positions
         for particle in particles:
-            particle.update_position(WIDTH, HEIGHT,sidelength,gridwidth,gridlist,dt)
+            particle.update_position(WIDTH, HEIGHT, sidelength, gridwidth, gridlist, dt)
 
-        # -- Rendering --
-        screen.fill("black")  # clear screen with black
-        img = font.render(f'hello', True, 'red')
-        screen.blit(img, (20, 20))
+        # rendering
+        screen.fill("black") # clear screen with black
 
-        for p in particles:
-            pygame.draw.circle(screen, p.color, tuple(p.position), p.radius)
-        
-    pygame.display.flip()
+        for particle in particles:
+            pygame.draw.circle(screen, particle.color, tuple(particle.position), particle.radius)
     fps = clock.get_fps()
-    print(f"FPS: {fps:.1f}")
-
-
+    print(f"Rendering at {fps}fps")
+    pygame.display.flip()
 pygame.quit()

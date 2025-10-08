@@ -6,7 +6,7 @@ from Fizikia import*
 class Node:
     def __init__(self,position):
         self.position = position
-        self.container=set()
+        self.container = set()
 
 
 class particle:
@@ -17,10 +17,17 @@ class particle:
         self.velocity = np.array(velocity)        
         self.radius = radius if radius is not None else mass
         self.color = color
-        self.seperation=np.array([0.0,0.0])
+        self.seperation = np.array([0.0, 0.0])
+    
+    """user friendly description of the particles"""
+    def __str__(self):
+        return f"A {self.mass}kg particle at position {self.position}"
+
+    def __repr__(self):
+        return f"<particle with mass: {self.mass}, position: {self.position}, velocity: {self.velocity}>"
     
     """integrate velocity to calculate position"""
-    def update_position(self,width,height,sidelength,gridwidth,gridlist,dt=0.1):
+    def update_position(self, width, height, sidelength, gridwidth, gridlist, dt = 0.1):
         # remove particle from its inital grid container
         g = self.hash_grid(sidelength, gridwidth)
         if self in gridlist[g].container:        
@@ -33,9 +40,9 @@ class particle:
         # keep the particle inside the screen
         self.wall_sep(width,height)
 
-        # hash program into the correct grid
-        g = self.hash_grid( sidelength, gridwidth)
-        gridlist[g].container.add(self)
+        # hash particle into the correct grid
+        i = self.hash_grid( sidelength, gridwidth)
+        gridlist[i].container.add(self)
 
     # hashing particles into grid nodes by position
     def hash_grid(self, side_length, grid_width):
@@ -45,21 +52,21 @@ class particle:
     # separate the particle from the wall
     def wall_sep(self, width, height):
         flag=False
-        if self.position[0] > width:
+        if self.position[0] + self.radius >= width:
             flag=True
             self.position[0] = width - self.radius
-        if self.position[1] > height:
+        if self.position[1] + self.radius >= height:
             flag=True
             self.position[1] = height - self.radius
-        if self.position[0] < 0:
+        if self.position[0] - self.radius <= 0:
             flag=True
             self.position[0] = 0 + self.radius
-        if self.position[1] < 0:
+        if self.position[1] - self.radius <= 0:
             flag=True
             self.position[1] = 0 + self.radius
         return flag
 
-    def wall_collision(self,width,height):
+    def wall_collision(self, width, height):
         # compute box center
         middle=[width/2, height/2]
         
@@ -68,13 +75,11 @@ class particle:
         allowed_distance_from_middle_x = middle[0] - self.radius
         if distance_from_middle_x >= allowed_distance_from_middle_x:
             self.wall_sep(width, height)
-            norm_axis = np.array([1, 0])
-            self.velocity -= 2* np.dot(self.velocity, norm_axis) * norm_axis
+            self.velocity[0] *= -1
         
         # check and resolve collision with horizontal wall
         distance_from_middle_y = abs(self.position[1] - middle[1])
         allowed_distance_from_middle_y = middle[1] - self.radius
         if distance_from_middle_y >= allowed_distance_from_middle_y:
              self.wall_sep(width, height)
-             norm_axis = np.array([0, 1])
-             self.velocity -= 2* np.dot(self.velocity, norm_axis) * norm_axis
+             self.velocity[1] *= -1      

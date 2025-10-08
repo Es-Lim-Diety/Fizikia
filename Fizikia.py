@@ -8,31 +8,21 @@ from classes import *
 WIDTH, HEIGHT = 1280, 720
 
 def  collision(particleA, particleB):
-       separation_vector = particleA.position - particleB.position
-       separation = np.linalg.norm(separation_vector)
-       LowerBound = particleA.radius + particleB.radius
-       
+       separation = np.linalg.norm(particleA.position - particleB.position)
+       LowerBound = particleA.radius + particleB.radius    
+       return abs(separation) <= LowerBound
 
-       return  abs(separation) <= LowerBound
 
-def momentum_after_collision(particleA, particleB):
-     # vector decompostition method
-
+def momentum_after_collision(particleA, particleB): # vector decompostition method
      # set up basis vectors
-     separation = particleA.position - particleB.position
+     separation = particleA.position - particleB.position    
 
-    # assign separation vectors to particles for position update math
-     particleA.seperation = separation/2
-     particleB.seperation = -(separation/2)
-
-    
      norm = np.linalg.norm(separation)
      #avoid nan errors and division by zero!!
      if  norm != 0 and  not np.isnan(norm):
           norm_axis = separation / norm
      else:
           norm_axis = separation
-     tan_axis = np.array([-norm_axis[1], norm_axis[0]])
      
      # transform velocities in the new orthonormal system
      v_an = np.dot(particleA.velocity, norm_axis)* norm_axis
@@ -69,105 +59,128 @@ def grid(WIDTH, HEIGHT, side_length):
     return wallgrids,gridlist, grid_width, grid_height
 
 
+
 def revhash_grid (grid_position, grid_width,sidelength):
     y=(grid_position // grid_width)*sidelength
     x=(grid_position % grid_width)*sidelength
-    return(float(x),float(y))
+    return (float(x),float(y))
 
 
-def velocity(centerx,centery,px,py):
-    dx=centerx-px
-    dy=centery-py
-    magnitude=np.sqrt((dx*dx)+(dy*dy))
-    speed=5
-    vx=(dx/magnitude)*speed
-    vy=(dy/magnitude)*speed
-    return (vx,vy)
+# initialise particle velocities
+def velocity(center, p, speed=5):#
+    distance_vector = np.array(center) - np.array(p)
+    magnitude = np.linalg.norm(distance_vector)
+    if magnitude == 0:
+        return np.array([0, 0])
+    direction = distance_vector / magnitude
+    init_velocity = speed * direction
+    return init_velocity
 
-#helper function for collision search
-def collisions(gridA,gridB):
-    if len(gridA)>1 and len(gridB)>1:
-        for g in gridA:# loop through all particles in the grid
-            for j in gridB:# loop through all particles in the neighboring grid
-                if collision(j,g):
-                    momentum_after_collision(j,g)# resolve collision
-    elif len(gridA)==1 and len(gridB)>1:
-        particleA=next(iter(gridA))
-        for j in gridB:
-            if collision(j,particleA):
-                momentum_after_collision(j,particleA)
-    elif len(gridB)==1 and len(gridA)>1:
-        particleB=next(iter(gridB))
-        for i in gridA:
-            if collision(i,particleB):
-                momentum_after_collision(i,particleB)
-    else:# both grids have only one particle
-        particleA=next(iter(gridA))
-        particleB=next(iter(gridB))
-        if collision(particleA,particleB):
-            momentum_after_collision(particleA,particleB)                                        
 
-def internal_collisions(grid):
-    for i in grid:
-        for j in grid:
-            if not i == j:
-                if collision(i,j):
-                    momentum_after_collision(i, j)
+
 # generalized use case
-def collision_search(gridlist, gridwidth):
-
+def collision_search(gridlist, rownum, particle_to_index_map):
     queue = deque([(node, i) for i, node in enumerate(gridlist) if len(node.container)])
-
-    rownum=gridwidth
-    gridset=set()
-
+    gridset = set()
+    collision_pairs = []
+    
     while queue:
+        node, i = queue.popleft()
+        gridset.add(node)        
+        if not node.container:
+            continue
+            
+        # internal_collisions
+        particle_in_cell = list(node.container)
+        for p1 in range(len(particle_in_cell)):
+            for p2 in range(p1 + 1, len(particle_in_cell)):
+                if collision(particle_in_cell[p1], particle_in_cell[p2]):
+                    idx1 = particle_to_index_map[id(particle_in_cell[p1])]
+                    idx2 = particle_to_index_map[id(particle_in_cell[p2])]
+                    collision_pairs.append([idx1, idx2])
+                    
 
-        grid,i = queue.popleft()
-        gridset.add(grid)
-        # check for collisions with neighboring grids
-        # only run check if the grid is not empty
-        if len(grid.container):
+        # collisions with neighbors
+        for i_offset in [-1, 0, 1]:
+            for j_offset in [-1, 0, 1]:
+                # skip the center cell
+                if i_offset == 0 and j_offset == 0:
+                    continue
 
-            # solve collisions within grid
-            if len(grid.container)>1:
-                internal_collisions(grid.container)
+                # calculate neighbour offset index in 1D
+                neighbor = i + (i_offset*rownum) + j_offset
 
-            if i + 1 < len(gridlist) and (i + 1) % rownum != 0 and len(gridlist[i + 1].container):#check the grid to the east
-                if gridlist[i + 1] not in gridset:# to avoid double collision resolution
-                    collisions(grid.container, gridlist[i + 1].container)
-                                
+                # boundary checks
+                if not (0 <= neighbor < len(gridlist)):# check if neighbour is in the grid bounds
+                    continue
 
-            if i - 1 >= 0 and i  % rownum != 0 and len(gridlist[i - 1].container):#check the grid to the west
-                if gridlist[i - 1] not in gridset:# to avoid double collision resolution
-                    collisions(grid.container, gridlist[i - 1].container)
-                                    
+                if (i % rownum == 0) and (j_offset == -1):# check for wrap-around on left edge
+                    continue
 
-            if i + rownum < len(gridlist) and len(gridlist[i+ rownum].container):#check the grid to the south
-                if gridlist[i + rownum] not in gridset:# to avoid double collision resolution
-                    collisions(grid.container, gridlist[i + rownum].container)
+                if ((i+1) % rownum == 0) and j_offset == 1: # check for wrap-around on the right edge
+                    continue
 
+                # if all checks pass, perform collision logic
+                neighbor_node = gridlist[neighbor]
+                if neighbor_node.container and neighbor_node not in gridset:
+                    for p1 in node.container:
+                        for p2 in neighbor_node.container:
+                            if collision(p1, p2):
+                                idx1 = particle_to_index_map[id(p1)]
+                                idx2 = particle_to_index_map[id(p2)]
+                                collision_pairs.append([idx1, idx2])
+    return np.array(collision_pairs)
 
-            if i + rownum - 1< len(gridlist) and i  % rownum != 0 and len(gridlist[i + rownum - 1].container):#check the grid to the SW
-                if gridlist[i + rownum - 1] not in gridset:# to avoid double collision resolution
-                    collisions(grid.container, gridlist[i + rownum - 1].container)
-                                
+                
+def resolve_collisions_numpy(matrix, positions, velocities, masses):
+    # 1. Get particle properties using fancy indexing
+    indices_A = matrix[:, 0]
+    indices_B = matrix[:, 1]
+    
+    pos_A = positions[indices_A]
+    pos_B = positions[indices_B]
+    
+    vel_A = velocities[indices_A]
+    vel_B = velocities[indices_B]
+    
+    mass_A = masses[indices_A]
+    mass_B = masses[indices_B]
 
-            if i + rownum + 1< len(gridlist) and (i + 1) % rownum != 0 and len(gridlist[i + rownum + 1].container):#check the grid to the SE
-                if gridlist[i + rownum+1] not in gridset:# to avoid double collision resolution
-                    collisions(grid.container, gridlist[i + rownum + 1].container)
-
-            if i - rownum >= 0 and len(gridlist[i - rownum].container):#check the grid to the north
-                if gridlist[i - rownum] not in gridset:# to avoid double collision resolution
-                    collisions(grid.container, gridlist[i - rownum].container)
-
-            if i - rownum + 1 >= 0 and i  % rownum != 0 and len(gridlist[i - rownum + 1].container):#check the grid to the NE
-                if gridlist[i - rownum + 1] not in gridset:# to avoid double collision resolution
-                    collisions(grid.container, gridlist[i - rownum + 1].container)
-
-            if i - rownum - 1 >= 0 and (i + 1) % rownum != 0 and len(gridlist[i - rownum - 1].container):#check the grid to the SW
-                if gridlist[i - rownum - 1] not in gridset:# to avoid double collision resolution
-                    collisions(grid.container, gridlist[i - rownum - 1].container)
+    # --- 2. Vectorize the physics calculations ---
+    
+    # Calculate separation vectors and distances (norms)
+    separation_vecs = pos_A - pos_B
+    norms = np.linalg.norm(separation_vecs, axis=1, keepdims=True)
+    
+    # Avoid division by zero for overlapping particles
+    norms[norms == 0] = 1e-6 
+    
+    # Calculate normalized collision axes (unit vectors)
+    norm_axes = separation_vecs / norms
+    
+    # Project initial velocities onto the collision axes
+    # This is the component of velocity along the line of collision
+    v_an_scalar = np.sum(vel_A * norm_axes, axis=1, keepdims=True)
+    v_bn_scalar = np.sum(vel_B * norm_axes, axis=1, keepdims=True)
+    
+    # Calculate the tangential velocities (perpendicular to the collision)
+    v_at = vel_A - v_an_scalar * norm_axes
+    v_bt = vel_B - v_bn_scalar * norm_axes
+    
+    # Apply the 1D elastic collision formula to the normal components
+    m_sum = mass_A + mass_B
+    new_v_an_scalar = ((mass_A - mass_B) * v_an_scalar + 2 * mass_B * v_bn_scalar) / m_sum
+    new_v_bn_scalar = ((mass_B - mass_A) * v_bn_scalar + 2 * mass_A * v_an_scalar) / m_sum
+    
+    # Reconstruct the final velocity vectors
+    new_vel_A = new_v_an_scalar * norm_axes + v_at
+    new_vel_B = new_v_bn_scalar * norm_axes + v_bt
+    
+    # --- 3. Update the original arrays with the new velocities ---
+    velocities[indices_A] = new_vel_A
+    velocities[indices_B] = new_vel_B
+        
+    
 
 
 
