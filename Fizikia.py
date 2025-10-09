@@ -147,10 +147,16 @@ def resolve_collisions_numpy(matrix, positions, velocities, masses):
     mass_B = masses[indices_B]
 
     # --- 2. Vectorize the physics calculations ---
+    seperation_array = np.zeros_like(positions)  # same shape as positions
     
     # Calculate separation vectors and distances (norms)
     separation_vecs = pos_A - pos_B
     norms = np.linalg.norm(separation_vecs, axis=1, keepdims=True)
+    # Update separation arrays to resolve sticky collisions
+    np.add.at(seperation_array, indices_A, separation_vecs / 2)
+    np.add.at(seperation_array, indices_B, -separation_vecs / 2)
+
+    
     
     # Avoid division by zero for overlapping particles
     norms[norms == 0] = 1e-6 
@@ -179,19 +185,21 @@ def resolve_collisions_numpy(matrix, positions, velocities, masses):
     # --- 3. Update the original arrays with the new velocities ---
     velocities[indices_A] = new_vel_A
     velocities[indices_B] = new_vel_B
-        
+    
+    #uncomment to use separation in position update function
+    #return seperation_array    
     
 
 
 
 """uniform radius version optimization"""
-def gridbfs_uniformradius(gridlist, gridwidth):
+def gridbfs_uniformradius(gridlist, gridwidth,particles):
     #finds grids with particles and adds them to the queue
     queue = deque([(node, i) for i, node in enumerate(gridlist) if node.container])
 
     rownum=gridwidth
     gridset=set()
-
+    collision_pairs = []
     while queue:
         # pop the first grid in the queue and its position in list
         grid,i = queue.popleft()
@@ -201,50 +209,60 @@ def gridbfs_uniformradius(gridlist, gridwidth):
         if grid.container:
             # check for collisions with neighboring grids
             # only run check if the grid is not empty
-            
+            idx=particles[id(next(iter(grid.container)))]
             #check internal collisions first
             if len(grid.container)>1:
                 particlea=next(iter(grid.container))
                 for particle in grid.container:
                     if particlea!=particle:
-                        momentum_after_collision(particlea,particle)
+                        idx2=particles[id(particle)]
+                        collision_pairs.append([idx, idx2])
         
             if i + 1 < len(gridlist) and (i + 1) % rownum != 0 and gridlist[i + 1].container:
                 if gridlist[i + 1] not in gridset:
                     if collision(next(iter(gridlist[i + 1].container)), next(iter(grid.container))):
-                        momentum_after_collision(next(iter(gridlist[i + 1].container)), next(iter(grid.container)))
+                        idx2=particles[id(next(iter(gridlist[i + 1].container)))]
+                        collision_pairs.append([idx, idx2])
 
             if i - 1 >= 0 and i % rownum != 0 and gridlist[i - 1].container:
                 if gridlist[i - 1] not in gridset:
                     if collision(next(iter(gridlist[i - 1].container)), next(iter(grid.container))):
-                        momentum_after_collision(next(iter(grid.container)), next(iter(gridlist[i - 1].container)))
+                        idx2=particles[id(next(iter(gridlist[i - 1].container)))]
+                        collision_pairs.append([idx, idx2])
 
             if i + rownum < len(gridlist) and gridlist[i+ rownum].container:#up
                 if gridlist[i + rownum] not in gridset:
                     if collision(next(iter(gridlist[i + rownum].container)), next(iter(grid.container))):
-                       momentum_after_collision(next(iter(grid.container)), next(iter(gridlist[i + rownum].container)))
+                        idx2=particles[id(next(iter(gridlist[i + rownum].container)))]
+                        collision_pairs.append([idx, idx2])
 
             if i + rownum - 1< len(gridlist) and i  % rownum != 0 and gridlist[i + rownum - 1].container:#NW
                 if gridlist[i + rownum - 1] not in gridset:
                     if collision(next(iter(gridlist[i+ rownum - 1].container)), next(iter(grid.container))):
-                        momentum_after_collision(next(iter(grid.container)), next(iter(gridlist[i + rownum - 1].container)))
+                        idx2=particles[id(next(iter(gridlist[i + rownum - 1].container)))]
+                        collision_pairs.append([idx, idx2])
 
             if i + rownum + 1< len(gridlist) and (i + 1) % rownum != 0 and gridlist[i + rownum + 1].container:#NE
                 if gridlist[i + rownum+1] not in gridset:
                     if collision(next(iter(gridlist[i+ rownum + 1].container)), next(iter(grid.container))):
-                        momentum_after_collision(next(iter(grid.container)), next(iter(gridlist[i + rownum + 1].container)))
+                        idx2=particles[id(next(iter(gridlist[i + rownum + 1].container)))]
+                        collision_pairs.append([idx, idx2])
 
             if i - rownum >= 0 and gridlist[i - rownum].container:#down
                 if gridlist[i - rownum] not in gridset:
                     if collision(next(iter(gridlist[i - rownum].container)), next(iter(grid.container))):
-                        momentum_after_collision(next(iter(grid.container)), next(iter(gridlist[i - rownum].container)))
+                        idx2=particles[id(next(iter(gridlist[i - rownum].container)))]
+                        collision_pairs.append([idx, idx2])
 
             if i - rownum + 1 >= 0 and i  % rownum != 0 and gridlist[i - rownum + 1 ].container:#SW
                 if gridlist[i - rownum + 1] not in gridset:
                     if collision(next(iter(gridlist[i - rownum + 1].container)), next(iter(grid.container))):
-                        momentum_after_collision(next(iter(grid.container)), next(iter(gridlist[i - rownum + 1].container)))
+                        idx2=particles[id(next(iter(gridlist[i - rownum + 1].container)))]
+                        collision_pairs.append([idx, idx2])
 
             if i - rownum - 1 >= 0 and (i + 1) % rownum != 0 and gridlist[i - rownum - 1].container:#SE
                 if gridlist[i - rownum - 1] not in gridset:
                     if collision(next(iter(gridlist[i - rownum - 1].container)), next(iter(grid.container))):
-                        momentum_after_collision(next(iter(grid.container)), next(iter(gridlist[i - rownum - 1].container)))
+                        idx2=particles[id(next(iter(gridlist[i - rownum - 1].container)))]
+                        collision_pairs.append([idx, idx2])
+    return np.array(collision_pairs)                    
