@@ -18,6 +18,7 @@ class particle:
         self.radius = radius if radius is not None else mass
         self.color = color
         self.seperation = np.array([0.0, 0.0])
+        self.grid=None
     
     """user friendly description of the particles"""
     def __str__(self):
@@ -31,7 +32,8 @@ class particle:
         # remove particle from its inital grid container
         g = self.hash_grid(sidelength, gridwidth)
         if self in gridlist[g].container:        
-            gridlist[g].container.remove(self)       
+            gridlist[g].container.remove(self)
+            self.grid=None       
 
         # simple Euler integration
         self.position += (self.velocity * dt) + self.seperation
@@ -43,6 +45,7 @@ class particle:
         # hash particle into the correct grid
         i = self.hash_grid( sidelength, gridwidth)
         gridlist[i].container.add(self)
+        self.grid=gridlist[i]
 
     # hashing particles into grid nodes by position
     def hash_grid(self, side_length, grid_width):
