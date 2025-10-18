@@ -11,14 +11,14 @@ class Node:
 
 class particle:
     """class for objects in simulation"""
-    def __init__(self, mass, position, velocity, color,radius):
+    def __init__(self, mass, position, velocity, color,radius,grid=None):
         self.mass = mass
         self.position = np.array(position)
         self.velocity = np.array(velocity)        
         self.radius = radius if radius is not None else mass
         self.color = color
         self.seperation = np.array([0.0, 0.0])
-        self.grid=None
+        self.grid=grid
     
     """user friendly description of the particles"""
     def __str__(self):
