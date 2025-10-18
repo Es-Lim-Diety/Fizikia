@@ -15,8 +15,11 @@ clock = pygame.time.Clock()
 FPS = 60
 # UI Manager
 manager = pygame_gui.UIManager((WIDTH, HEIGHT))
-
-
+# function to create circle surface to speed up rendering
+def make_circle_surface(radius, color):
+    surf = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+    pygame.draw.circle(surf, color, (radius, radius), radius)
+    return surf,surf.get_rect()
 
 # menu widgets
 #sliders with their labels
@@ -155,11 +158,15 @@ while running:
                     sidelength=10
                     incr=math.floor((len(gridlist) / num))
                     idx=0
+                    collisionQueue=deque()
+                    surf,rect = make_circle_surface(5, (0, 255, 0))
                     for i in range(num):
                         position = gridlist[idx].position
                         x, y = revhash_grid(position, gridwidth,10)
                         vx, vy = velocity([WIDTH/2, HEIGHT/2], [x, y])
-                        particles += [particle(5, [x, y], [vx, vy], 'green', 5)]
+                        particles += [particle(5, [x, y], [vx, vy], 'green', 5,gridlist[idx])]
+                        gridlist[idx].container.add(particles[-1])
+                        collisionQueue.append((gridlist[idx],position))  
                         idx += incr
                         # create a dictionary to make it easy to identify particles
                         particles_to_index_map = {id(p): i for i, p in enumerate(particles)}
@@ -213,7 +220,7 @@ while running:
         pygame.display.set_caption("Physics Visualization")
         # handle collisions between particles
         # find all the collision pairs
-        collision_matrix = gridbfs_uniformradius(gridlist, gridwidth, particles_to_index_map)
+        collision_matrix = collisonSearch_uniformradius(gridlist, gridwidth, particles_to_index_map,collisionQueue)
 
         # resolve collisions, but the output will be stored in the velocity array
         if collision_matrix.size > 0:
@@ -228,10 +235,13 @@ while running:
             # Assign the new velocity back to the object's attribute
             if particles[idx].grid in wallgrids:
                 particles[idx].wall_collision(WIDTH, HEIGHT)
-                #velocities[idx] = particles[idx].velocity  # Update velocities array if needed
+                velocities[idx] = particles[idx].velocity  # Update velocities array if needed
             particles[idx].update_position(WIDTH, HEIGHT, sidelength, gridwidth, gridlist, dt)
-            #positions[idx] = particles[idx].position  # Update positions array if needed
-            pygame.draw.circle(screen, particles[idx].color, tuple(particles[idx].position), particles[idx].radius)            
+            collisionQueue.append((particles[idx].grid,particles[idx].hash_grid(sidelength, gridwidth)))
+            positions[idx] = particles[idx].position  # Update positions array if needed
+            rect.center=(positions[idx][0], positions[idx][1])
+            screen.blit(surf, rect)
+            #pygame.draw.circle(screen, particles[idx].color, tuple(particles[idx].position), particles[idx].radius)            
 
         # rendering
          # clear screen with black
