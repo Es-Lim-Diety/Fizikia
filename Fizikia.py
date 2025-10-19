@@ -79,13 +79,13 @@ def velocity(center, p, speed=5):#
 
 
 # generalized use case
-def collision_search(gridlist, rownum, particle_to_index_map):
-    queue = deque([(node, i) for i, node in enumerate(gridlist) if len(node.container)])
+def collision_search(gridlist, rownum, particle_to_index_map,collisionQueue):
+    #queue = deque([(node, i) for i, node in enumerate(gridlist) if len(node.container)])
     gridset = set()
     collision_pairs = []
     
-    while queue:
-        node, i = queue.popleft()
+    while collisionQueue:
+        node, i = collisionQueue.popleft()
         gridset.add(node)        
         if not node.container:
             continue
@@ -193,16 +193,45 @@ def resolve_collisions_numpy(matrix, positions, velocities, masses):
 
 
 """uniform radius version optimization"""
-def gridbfs_uniformradius(gridlist, gridwidth,particles):
-    #finds grids with particles and adds them to the queue
-    queue = deque([(node, i) for i, node in enumerate(gridlist) if node.container])
+def collisonSearch_uniformradius(gridlist, gridwidth,particles,collisionQueue):
+    """
+    Collision Search with Domain-Specific Optimizations
 
+    Assumptions:
+    ------------
+    1. Single-Particle Grid Occupancy
+       - Each grid cell is approximately one particle diameter wide.
+       - Statistically, at most one particle occupies a given grid at any frame.
+       - Reduces neighbor collision checks while maintaining accuracy.
+
+    2. Neighbor Collisions via Representative Particle
+       - Only the first (representative) particle in each neighboring cell is checked.
+       - Given typical velocities and small dt, particles are almost always
+         captured in adjacent grids before skipping multiple grids.
+       - Empirical testing shows very few missed collisions under expected conditions.
+
+    3. Internal Grid Collisions
+       - For grids with multiple particles, the first particle is used as reference.
+       - Other particles cannot bypass the first without entering a neighbor grid first.
+       - Captures most meaningful collisions with minimal pairwise checks.
+
+    4. Limitations / Edge Cases
+       - Assumptions are valid for expected simulation parameters (particle spacing, velocities, dt).
+       - High initial velocities or unusually dense grids could violate assumptions.
+       - A general-purpose collision method exists for handling such edge cases.
+
+    Summary:
+    --------
+    These design choices are performance-oriented, domain-specific optimizations.
+    They balance computational efficiency and collision accuracy for typical simulation conditions.
+    Empirical validation supports them as safe and effective for high-performance CPU simulations.
+    """
     rownum=gridwidth
     gridset=set()
     collision_pairs = []
-    while queue:
+    while collisionQueue:
         # pop the first grid in the queue and its position in list
-        grid,i = queue.popleft()
+        grid,i = collisionQueue.popleft()
         # add the grid to the set of visited grids
         gridset.add(grid)
 
@@ -266,3 +295,4 @@ def gridbfs_uniformradius(gridlist, gridwidth,particles):
                         idx2=particles[id(next(iter(gridlist[i - rownum - 1].container)))]
                         collision_pairs.append([idx, idx2])
     return np.array(collision_pairs)                    
+
