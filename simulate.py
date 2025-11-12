@@ -320,20 +320,20 @@ def main():
             collision_matrix = collision_search(gridlist, gridwidth, particles_to_index_map, collisionQueue)
             
             if collision_matrix.size > 0:
-                #resolve_collisions_numpy(collision_matrix, positions, velocities, masses, radii)
-                (corrections, deltas_A, deltas_B) = calculate_all_changes_numba(
-                    collision_matrix, positions, velocities, masses, radii
-                )       
-                wall_collision(positions, velocities, radii, WIDTH, HEIGHT)
-            
-                indices_A = collision_matrix[:, 0]
-                indices_B = collision_matrix[:, 1]
+                resolve_collisions_numpy(collision_matrix, positions, velocities, masses, radii)
+                # (corrections, deltas_A, deltas_B) = calculate_all_changes_numba(
+                #     collision_matrix, positions, velocities, masses, radii
+                # )       
+                wall_collision(positions, velocities, radii, WIDTH, HEIGHT)            
+                
+                #indices_A = collision_matrix[:, 0]
+                #indices_B = collision_matrix[:, 1]
 
                 # np.add.at(positions, indices_A, corrections * 0.5)
                 # np.add.at(positions, indices_B, -corrections * 0.5)
 
-                np.add.at(velocities, indices_A, deltas_A)
-                np.add.at(velocities, indices_B, deltas_B)
+                #np.add.at(velocities, indices_A, deltas_A)
+                #np.add.at(velocities, indices_B, deltas_B)
 
             # update positions        
             update_positions(positions, velocities)
