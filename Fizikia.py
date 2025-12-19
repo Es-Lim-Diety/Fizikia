@@ -95,7 +95,9 @@ def wall_sep(positions, radii, width, height):
     np.clip(positions[:, 1], min_y, max_y, out=positions[:, 1])
 
 # pretty self explanatory innit
-def wall_collision(positions, velocities, radii, width, height):
+def wall_collision(positions, velocities, radii, width, height,flag):
+    if flag==False:
+        return
     # x axis collision
     middle_x = width / 2
     allowed_distance_x = middle_x - radii
@@ -120,12 +122,11 @@ def update_positions(positions, velocities, dt=0.1):
 
 # generalized use case
 def collision_search(gridlist, rownum, particle_to_index_map, collisionQueue):
-    queue = deque(collisionQueue)
     gridset = set()
     collision_pairs = []
     
-    while queue:
-        node, i = queue.popleft()
+    while collisionQueue:
+        node, i = collisionQueue.popleft()
         gridset.add(node)
             
         # internal_collisions
@@ -168,72 +169,76 @@ def collision_search(gridlist, rownum, particle_to_index_map, collisionQueue):
     return np.array(collision_pairs)
 
 # use conservation of momentum to calculate final particle velocities             
-def resolve_collisions_numpy(matrix, positions, velocities, masses, radii):
-    # Get particle properties using indexing
-    indices_A = matrix[:, 0]
-    indices_B = matrix[:, 1]
-    
-    pos_A = positions[indices_A]
-    pos_B = positions[indices_B]
-    
-    vel_A = velocities[indices_A]
-    vel_B = velocities[indices_B]
-    
-    mass_A = masses[indices_A]
-    mass_B = masses[indices_B]
-
-    rad_A = radii[indices_A].reshape(-1, 1)
-    rad_B = radii[indices_B].reshape(-1, 1)
-
-    # --- Vectorize the physics calculations ---   
-    # -- Fix overlaps -- 
-    # Calculate separation vectors and distances (norms)
-    separation_vecs = pos_A - pos_B
-    norms = np.linalg.norm(separation_vecs, axis=1, keepdims=True)
-
-     # Avoid division by zero for overlapping particles
-    norms[norms == 0] = 1e-6    
-    
-    # Calculate normalized collision axes (unit vectors)
-    norm_axes = separation_vecs / norms
-
-    #calculate overlap
-    radii_sum = rad_A + rad_B
-    overlap = radii_sum - norms
-
-    # only correct if overlap is positive
-    overlap_mask = (overlap > 0)
-
-    # calculate the correction
-    correction_vecs = norm_axes * (overlap * 0.5) * overlap_mask
-
-    # apply the correction
-    np.add.at(positions, indices_A, correction_vecs)
-    np.add.at(positions, indices_B, -correction_vecs)
-
-    # -- Velocity resolution --
-    
-    # Project initial velocities onto the collision axes
-    # This is the component of velocity along the line of collision
-    v_an_scalar = np.sum(vel_A * norm_axes, axis=1, keepdims=True)
-    v_bn_scalar = np.sum(vel_B * norm_axes, axis=1, keepdims=True)
+def resolve_collisions_numpy(matrix, positions, velocities, masses, radii,flag,dt):
+    if flag==True:
+        # Get particle properties using indexing
+        indices_A = matrix[:, 0]
+        indices_B = matrix[:, 1]
         
-    # Apply the 1D elastic collision formula to the normal components
-    m_sum = mass_A + mass_B
-    new_v_an_scalar = ((mass_A - mass_B) * v_an_scalar + 2 * mass_B * v_bn_scalar) / m_sum
-    new_v_bn_scalar = ((mass_B - mass_A) * v_bn_scalar + 2 * mass_A * v_an_scalar) / m_sum
+        pos_A = positions[indices_A]
+        pos_B = positions[indices_B]
+        
+        vel_A = velocities[indices_A]
+        vel_B = velocities[indices_B]
+        
+        mass_A = masses[indices_A]
+        mass_B = masses[indices_B]
 
-    # calculate the change in velocity
-    d_v_an_scalar = new_v_an_scalar - v_an_scalar
-    d_v_bn_scalar = new_v_bn_scalar - v_bn_scalar
+        rad_A = radii[indices_A].reshape(-1, 1)
+        rad_B = radii[indices_B].reshape(-1, 1)
 
-    # convert the scalar change to a vector in 2D
-    d_v_A = d_v_an_scalar * norm_axes
-    d_v_B = d_v_bn_scalar * norm_axes
-    
-    # Update the original arrays with the new velocities
-    np.add.at(velocities, indices_A, d_v_A)
-    np.add.at(velocities, indices_B, d_v_B)
+        # --- Vectorize the physics calculations ---   
+        # -- Fix overlaps -- 
+        # Calculate separation vectors and distances (norms)
+        separation_vecs = pos_A - pos_B
+        norms = np.linalg.norm(separation_vecs, axis=1, keepdims=True)
+
+        # Avoid division by zero for overlapping particles
+        norms[norms == 0] = 1e-6    
+        
+        # Calculate normalized collision axes (unit vectors)
+        norm_axes = separation_vecs / norms
+
+        #calculate overlap
+        radii_sum = rad_A + rad_B
+        overlap = radii_sum - norms
+
+        # only correct if overlap is positive
+        overlap_mask = (overlap > 0)
+
+        # calculate the correction
+        correction_vecs = norm_axes * (overlap * 0.5) * overlap_mask
+
+        # apply the correction
+        np.add.at(positions, indices_A, correction_vecs)
+        np.add.at(positions, indices_B, -correction_vecs)
+
+        # -- Velocity resolution --
+        
+        # Project initial velocities onto the collision axes
+        # This is the component of velocity along the line of collision
+        v_an_scalar = np.sum(vel_A * norm_axes, axis=1, keepdims=True)
+        v_bn_scalar = np.sum(vel_B * norm_axes, axis=1, keepdims=True)
+            
+        # Apply the 1D elastic collision formula to the normal components
+        m_sum = mass_A + mass_B
+        new_v_an_scalar = ((mass_A - mass_B) * v_an_scalar + 2 * mass_B * v_bn_scalar) / m_sum
+        new_v_bn_scalar = ((mass_B - mass_A) * v_bn_scalar + 2 * mass_A * v_an_scalar) / m_sum
+
+        # calculate the change in velocity
+        d_v_an_scalar = new_v_an_scalar - v_an_scalar
+        d_v_bn_scalar = new_v_bn_scalar - v_bn_scalar
+
+        # convert the scalar change to a vector in 2D
+        d_v_A = d_v_an_scalar * norm_axes
+        d_v_B = d_v_bn_scalar * norm_axes
+        
+        # Update the original arrays with the new velocities
+        np.add.at(velocities, indices_A, d_v_A)
+        np.add.at(velocities, indices_B, d_v_B)
+    #update positions after resolving collisions or if no collisions    
+    positions += (velocities * dt)     
+
       
 """uniform radius version optimization"""
 def collisonSearch_uniformradius(gridlist, gridwidth,particles,collisionQueue):

@@ -1,5 +1,6 @@
 import pygame
 import pygame_gui
+import time
 
 from Fizikia import*
 from classes import*
@@ -29,7 +30,7 @@ label_velocity_slider = pygame_gui.elements.UILabel(
 )
 
 particle_slider = pygame_gui.elements.UIHorizontalSlider(
-    relative_rect=pygame.Rect((490, 160), (300, 40)), start_value=10, value_range=(1, 1500), manager=manager, click_increment=1, 
+    relative_rect=pygame.Rect((490, 160), (300, 40)), start_value=10, value_range=(1, 20000), manager=manager, click_increment=1, 
     )
 label_particle_slider = pygame_gui.elements.UILabel(
     relative_rect=pygame.Rect((800, 160), (200, 40)), text=f"Number of particle: {particle_slider.get_current_value():.0f}", manager=manager, 
@@ -146,7 +147,7 @@ def initialize_particles(init_grid_indices, color_list, gridlist):
         # populate nodes with particle data
         gridlist[int(init_grid_indices[i])].container.add(p)
         # populate queue with active nodes
-        collisionQueue.add((gridlist[int(init_grid_indices[i])], int(init_grid_indices[i])))
+        collisionQueue.append((gridlist[int(init_grid_indices[i])], int(init_grid_indices[i])))
 
     # start the simulation
     STATE = "simulation"
@@ -155,7 +156,8 @@ def initialize_particles(init_grid_indices, color_list, gridlist):
 
 particles=[]
 particles_to_index_map={}
-collisionQueue=set()
+#use deque to avoid recreating the queue in the search algos
+collisionQueue=deque()
 initial_masses = []
 initial_radii = []
 initial_colors = []
@@ -314,16 +316,34 @@ def main():
             old_node_ids = hash_grid(positions, side_length, gridwidth)
 
             # handle collisions
+            startsearch=time.time()
             collision_matrix = collision_search(gridlist, gridwidth, particles_to_index_map, collisionQueue)
-            
+            endsearch=time.time()
+            #profiling prints
+            print(f"Collision search time: {endsearch-startsearch:.4f} seconds")
+            flag=False
+            # determine time step based on max speed
+            max_speed = np.mean(np.linalg.norm(velocities, axis=1))
+            dt_calc = 1 / (1 + max_speed/2 )
+
+            #profiling prints
+            print(f"max speed: {max_speed:.4f}")
+            print(f"dt for collision resolution: {dt_calc:.6f} seconds")
+
             if collision_matrix.size > 0:
-                resolve_collisions_numpy(collision_matrix, positions, velocities, masses, radii)                  
-                wall_collision(positions, velocities, radii, WIDTH, HEIGHT)            
+                #skip collision math if no collisions detected and only update positions
+                flag=True
+            startcalc=time.time()    
+            resolve_collisions_numpy(collision_matrix, positions, velocities, masses, radii,flag,dt_calc)                  
+            wall_collision(positions, velocities, radii, WIDTH, HEIGHT,flag)
+            endcalc=time.time()
+            #profiling prints
+            print(f"Collision resolution time: {endcalc-startcalc:.4f} seconds")              
                 
                 
 
-            # update positions        
-            update_positions(positions, velocities)
+            #update positions        
+            
             wall_sep(positions, radii, WIDTH, HEIGHT)
             new_node_ids = hash_grid(positions, side_length, gridwidth)        
 
@@ -334,6 +354,7 @@ def main():
             # --- render ---
             screen.fill("black")
             # assign values to particles and draw them
+            startren=time.time()
             for i, p in enumerate(particles):            
                 p.color=new_colors[i]
                 p.position=positions[i]    
@@ -345,15 +366,12 @@ def main():
                     
                     old_node.container.remove(p)                
                     new_node.container.add(p)
-                    
 
-                    if not old_node.container and old_node.container in collisionQueue:
-                        collisionQueue.remove((old_node, old_node_ids[i]))
-
-                    collisionQueue.add((new_node, new_node_ids[i]))
+                    collisionQueue.append((new_node, new_node_ids[i]))
                     
                 pygame.draw.circle(screen, p.color, tuple(p.position), p.radius) 
-        
+            endren=time.time()
+            print(f"Render time: {endren-startren:.4f} seconds")
         fps = clock.get_fps()
         print(f"Rendering at {fps:.0f}fps")
         pygame.display.flip()
