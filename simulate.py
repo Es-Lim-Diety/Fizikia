@@ -29,7 +29,7 @@ label_velocity_slider = pygame_gui.elements.UILabel(
 )
 
 particle_slider = pygame_gui.elements.UIHorizontalSlider(
-    relative_rect=pygame.Rect((490, 160), (300, 40)), start_value=10, value_range=(1, 15000), manager=manager, click_increment=1, 
+    relative_rect=pygame.Rect((490, 160), (300, 40)), start_value=10, value_range=(1, 1500), manager=manager, click_increment=1, 
     )
 label_particle_slider = pygame_gui.elements.UILabel(
     relative_rect=pygame.Rect((800, 160), (200, 40)), text=f"Number of particle: {particle_slider.get_current_value():.0f}", manager=manager, 
@@ -151,12 +151,6 @@ def initialize_particles(init_grid_indices, color_list, gridlist):
     # start the simulation
     STATE = "simulation"
 
-# function to create circle surface to speed up rendering
-def make_circle_surface(radius, color):
-    surf = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
-    pygame.draw.circle(surf, color, (radius, radius), radius)
-    return surf,surf.get_rect()
-
 # --- simulation ---
 
 particles=[]
@@ -176,6 +170,7 @@ set_ui_visibility(STATE)
 def main():
     global particles, initial_masses, initial_radii, initial_colors, initial_speeds, positions, velocities, masses, radii, WIDTH, HEIGHT, screen, clock, manager, current_selected_color, STATE, velocity_slider, label_velocity_slider, particle_slider, label_particle_slider, radius_slider, label_radius_slider, mass_slider, label_mass_slider, color_slider, label_color_slider, color_preview_box, equal_checkbox, custom_checkbox, add_particle_button, start_button 
     running = True
+    heat = True
     while running:
 
         dt = clock.tick(FPS) / 1000.0
@@ -224,8 +219,8 @@ def main():
 
                         # initialise grid for simulation
                         side_length = 10
-                        wallgrids, gridlist, gridwidth = init_grid(WIDTH, HEIGHT, side_length)                    
-                        #surf,rect = make_circle_surface(5, (0, 255, 0))
+                        gridlist, gridwidth = init_grid(WIDTH, HEIGHT, side_length)                    
+                        #surf,rect = make_circle_surface(2, (0, 255, 0))
 
                         # populate NumPy arrays                    
                         init_grid_indices = np.linspace(0, len(gridlist) - 1, num=num)         
@@ -289,7 +284,7 @@ def main():
                     if event.ui_element == start_button:
                         # create a grid
                         side_length = 100
-                        wallgrids, gridlist, gridwidth = init_grid(WIDTH, HEIGHT, side_length)                    
+                        gridlist, gridwidth = init_grid(WIDTH, HEIGHT, side_length)                    
                         
                         # populate NumPy arrays
                         masses = np.array(initial_masses).reshape(-1, 1)
@@ -297,13 +292,15 @@ def main():
                         init_grid_indices = np.linspace(0, len(gridlist) - 1, num=len(initial_masses))                  
                         positions = rev_hash_grid(init_grid_indices, gridwidth, side_length)
                         speeds = np.array(initial_speeds)
-                        velocities = init_velocity([WIDTH/2, HEIGHT/2], positions, speeds)  
+                        velocities = init_velocity([WIDTH/2, HEIGHT/2], positions, speeds)
+                        heat=False  
                         
                         # initialise particles and start simulation
                         if positions.size:
                             initialize_particles(
-                                gridlist,
-                                initial_colors)
+                                init_grid_indices,
+                                initial_colors,
+                                gridlist)
 
             manager.process_events(event)
         
@@ -320,20 +317,10 @@ def main():
             collision_matrix = collision_search(gridlist, gridwidth, particles_to_index_map, collisionQueue)
             
             if collision_matrix.size > 0:
-                resolve_collisions_numpy(collision_matrix, positions, velocities, masses, radii)
-                # (corrections, deltas_A, deltas_B) = calculate_all_changes_numba(
-                #     collision_matrix, positions, velocities, masses, radii
-                # )       
+                resolve_collisions_numpy(collision_matrix, positions, velocities, masses, radii)                  
                 wall_collision(positions, velocities, radii, WIDTH, HEIGHT)            
                 
-                #indices_A = collision_matrix[:, 0]
-                #indices_B = collision_matrix[:, 1]
-
-                # np.add.at(positions, indices_A, corrections * 0.5)
-                # np.add.at(positions, indices_B, -corrections * 0.5)
-
-                #np.add.at(velocities, indices_A, deltas_A)
-                #np.add.at(velocities, indices_B, deltas_B)
+                
 
             # update positions        
             update_positions(positions, velocities)
@@ -341,7 +328,8 @@ def main():
             new_node_ids = hash_grid(positions, side_length, gridwidth)        
 
             # calculate new colors
-            new_colors = update_particle_colors_by_speed(velocities, max_speed=20.0)
+            new_colors = update_particle_colors_by_speed(velocities, max_speed=50.0)
+
 
             # --- render ---
             screen.fill("black")
@@ -362,9 +350,8 @@ def main():
                     if not old_node.container and old_node.container in collisionQueue:
                         collisionQueue.remove((old_node, old_node_ids[i]))
 
-                    collisionQueue.add((new_node, new_node_ids[i]))            
-                #rect.center=(positions[idx][0], positions[idx][1])
-                #screen.blit(surf, rect)
+                    collisionQueue.add((new_node, new_node_ids[i]))
+                    
                 pygame.draw.circle(screen, p.color, tuple(p.position), p.radius) 
         
         fps = clock.get_fps()

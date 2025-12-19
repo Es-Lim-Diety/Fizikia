@@ -1,11 +1,10 @@
+# import macros
 import math
 from collections import deque
 import numpy as np
 from classes import *
 import matplotlib.cm as cm
-from numba import jit, prange
 
-# import macros
 """ Screen dimensions """
 WIDTH, HEIGHT = 1280, 720
 
@@ -13,7 +12,6 @@ def  collision(particleA, particleB):
        separation = np.linalg.norm(particleA.position - particleB.position)
        LowerBound = particleA.radius + particleB.radius    
        return abs(separation) <= LowerBound
-
 
 def momentum_after_collision(particleA, particleB): # vector decompostition method
      # set up basis vectors
@@ -46,18 +44,15 @@ def init_grid(WIDTH, HEIGHT, side_length):
     grid_width = math.ceil(WIDTH / side_length)
     grid_height = math.ceil(HEIGHT / side_length)
     num_grids = grid_width * grid_height
-    wallgrids=set()
     gridlist = []
     for i in range(num_grids):
           row = i // grid_width
           col = i % grid_width
           # only include grids fully inside the screen
           if col * side_length < WIDTH and row * side_length < HEIGHT:
-               gridlist.append(Node(i))
-          if col==0 or col==grid_width-1 or row==0 or row==grid_height-1:
-               wallgrids.add(gridlist[i])     
+               gridlist.append(Node(i))   
 
-    return wallgrids,gridlist, grid_width #grid_height
+    return gridlist, grid_width
 
 # converts grid indices to coordinates of the top-left corner
 def rev_hash_grid (grid_indices, grid_width, sidelength):
@@ -344,7 +339,7 @@ def collisonSearch_uniformradius(gridlist, gridwidth,particles,collisionQueue):
                         collision_pairs.append([idx, idx2])
     return np.array(collision_pairs)                    
 
-def update_particle_colors_by_speed(velocities, max_speed=50.0):
+def update_particle_colors_by_speed(velocities, max_speed=20.0):
     # 1. Calculate speeds (vectorized)
     # equivalent to: sqrt(vx^2 + vy^2)
     speeds = np.linalg.norm(velocities, axis=1)
@@ -362,68 +357,3 @@ def update_particle_colors_by_speed(velocities, max_speed=50.0):
     rgb_colors = (rgba_colors[:, :3] * 255).astype(int)
 
     return rgb_colors
-
-@jit(nopython=True, parallel=True, fastmath=True)
-def calculate_all_changes_numba(matrix, positions, velocities, masses, radii):
-    
-    # Get the number of collisions
-    num_collisions = matrix.shape[0]
-    
-    # --- 1. Create empty arrays to store the results ---
-    # These arrays will be built in parallel
-    correction_vecs = np.zeros((num_collisions, 2))
-    delta_v_A = np.zeros((num_collisions, 2))
-    delta_v_B = np.zeros((num_collisions, 2))
-    
-    # --- 2. Run the loop in parallel ---
-    # Numba splits this 'prange' loop across all your cores
-    for i in prange(num_collisions):
-        
-        # Get the indices for this one pair
-        idx_A = matrix[i, 0]
-        idx_B = matrix[i, 1]
-
-        # Get data for this one pair
-        pos_A = positions[idx_A]
-        pos_B = positions[idx_B]
-        vel_A = velocities[idx_A]
-        vel_B = velocities[idx_B]
-        mass_A = masses[idx_A, 0] # Get scalar from (N,1) array
-        mass_B = masses[idx_B, 0]
-        rad_A = radii[idx_A]
-        rad_B = radii[idx_B]
-
-        # --- 3. Positional Correction Math ---
-        separation_vec = pos_A - pos_B
-        
-        # Use np.dot for squared norm (faster)
-        norm_sq = np.dot(separation_vec, separation_vec)
-        
-        if norm_sq == 0:
-            norm_sq = 1e-12 # 1e-6 squared
-            
-        norm = np.sqrt(norm_sq)
-        norm_axis = separation_vec / norm
-        overlap = (rad_A + rad_B) - norm
-        
-        # if overlap > 0:
-        #     # We save the full correction, not half
-        #     correction_vecs[i] = norm_axis * overlap
-
-        # --- 4. Velocity Resolution Math ---
-        v_an_scalar = np.dot(vel_A, norm_axis)
-        v_bn_scalar = np.dot(vel_B, norm_axis)
-        
-        m_sum = mass_A + mass_B
-        new_v_an_scalar = ((mass_A - mass_B) * v_an_scalar + 2 * mass_B * v_bn_scalar) / m_sum
-        new_v_bn_scalar = ((mass_B - mass_A) * v_bn_scalar + 2 * mass_A * v_an_scalar) / m_sum
-        
-        delta_v_an_scalar = new_v_an_scalar - v_an_scalar
-        delta_v_bn_scalar = new_v_bn_scalar - v_bn_scalar
-
-        # Save the deltas
-        delta_v_A[i] = delta_v_an_scalar * norm_axis
-        delta_v_B[i] = delta_v_bn_scalar * norm_axis
-
-    # --- 5. Return all the calculated changes ---
-    return (correction_vecs, delta_v_A, delta_v_B)
