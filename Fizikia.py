@@ -169,7 +169,7 @@ def collision_search(gridlist, rownum, particle_to_index_map, collisionQueue):
     return np.array(collision_pairs)
 
 # use conservation of momentum to calculate final particle velocities             
-def resolve_collisions_numpy(matrix, positions, velocities, masses, radii,flag,dt):
+def resolve_collisions_numpy(matrix, positions, velocities, masses, radii,flag,dt,meanvelocity):
     if flag==True:
         # Get particle properties using indexing
         indices_A = matrix[:, 0]
@@ -216,7 +216,12 @@ def resolve_collisions_numpy(matrix, positions, velocities, masses, radii,flag,d
         # -- Velocity resolution --
         
         # Project initial velocities onto the collision axes
-        # This is the component of velocity along the line of collision
+        # This is the component of velocity along the line of collision    
+        separation_vecs = pos_A - pos_B
+        norms = np.linalg.norm(separation_vecs, axis=1, keepdims=True)
+        norms[norms == 0] = 1e-6    
+        norm_axes = separation_vecs / norms
+
         v_an_scalar = np.sum(vel_A * norm_axes, axis=1, keepdims=True)
         v_bn_scalar = np.sum(vel_B * norm_axes, axis=1, keepdims=True)
             
@@ -236,6 +241,15 @@ def resolve_collisions_numpy(matrix, positions, velocities, masses, radii,flag,d
         # Update the original arrays with the new velocities
         np.add.at(velocities, indices_A, d_v_A)
         np.add.at(velocities, indices_B, d_v_B)
+
+        vel_A = velocities[indices_A]
+        vel_B = velocities[indices_B]
+        # adjust velocities to maintain mean velocity
+        rms_current = np.sqrt(np.mean(np.sum(velocities**2, axis=1)))
+
+        scaling_factor = meanvelocity / (rms_current + 1e-6)
+        velocities *= scaling_factor
+        
     #update positions after resolving collisions or if no collisions    
     positions += (velocities * dt)     
 
