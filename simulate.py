@@ -18,6 +18,7 @@ FPS = 60
 manager = pygame_gui.UIManager((WIDTH, HEIGHT))
 current_selected_color = (255, 0, 0)
 STATE = "menu"
+rms_initial = None
 
 
 # -- menu widgets --
@@ -170,7 +171,7 @@ init_grid_indices=None
 set_ui_visibility(STATE)
     # main loop
 def main():
-    global particles, initial_masses, initial_radii, initial_colors, initial_speeds, positions, velocities, masses, radii, WIDTH, HEIGHT, screen, clock, manager, current_selected_color, STATE, velocity_slider, label_velocity_slider, particle_slider, label_particle_slider, radius_slider, label_radius_slider, mass_slider, label_mass_slider, color_slider, label_color_slider, color_preview_box, equal_checkbox, custom_checkbox, add_particle_button, start_button 
+    global rms_initial,particles, initial_masses, initial_radii, initial_colors, initial_speeds, positions, velocities, masses, radii, WIDTH, HEIGHT, screen, clock, manager, current_selected_color, STATE, velocity_slider, label_velocity_slider, particle_slider, label_particle_slider, radius_slider, label_radius_slider, mass_slider, label_mass_slider, color_slider, label_color_slider, color_preview_box, equal_checkbox, custom_checkbox, add_particle_button, start_button 
     running = True
     heat = True
     while running:
@@ -295,6 +296,7 @@ def main():
                         positions = rev_hash_grid(init_grid_indices, gridwidth, side_length)
                         speeds = np.array(initial_speeds)
                         velocities = init_velocity([WIDTH/2, HEIGHT/2], positions, speeds)
+
                         heat=False  
                         
                         # initialise particles and start simulation
@@ -310,8 +312,11 @@ def main():
         manager.update(dt/60)
         manager.draw_ui(screen)
 
+
         if STATE == "simulation":
             pygame.display.set_caption("Physics Visualization")
+            if rms_initial is None:    
+                rms_initial= np.sqrt(np.mean(np.sum(velocities**2, axis=1)))
             # --- calculations ---        
             old_node_ids = hash_grid(positions, side_length, gridwidth)
 
@@ -334,7 +339,7 @@ def main():
                 #skip collision math if no collisions detected and only update positions
                 flag=True
             startcalc=time.time()    
-            resolve_collisions_numpy(collision_matrix, positions, velocities, masses, radii,flag,dt_calc)                  
+            resolve_collisions_numpy(collision_matrix, positions, velocities, masses, radii,flag,dt_calc,rms_initial)                  
             wall_collision(positions, velocities, radii, WIDTH, HEIGHT,flag)
             endcalc=time.time()
             #profiling prints
